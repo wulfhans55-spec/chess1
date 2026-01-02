@@ -243,3 +243,72 @@ function minimax(depth, game, alpha, beta, isMax) {
     }
     return bestScore;
 }
+    // --- PART 4: EXECUTION & INTERACTION ---
+
+function makeBestMove() {
+    let moves = game.moves().sort((a, b) => b.includes('x') - a.includes('x'));
+    let bestMove = null;
+    let bestValue = -Infinity;
+
+    // AI looks 3 moves ahead + Quiescence search
+    for (let move of moves) {
+        game.move(move);
+        let boardValue = minimax(2, game, -Infinity, Infinity, false);
+        game.undo();
+        if (boardValue > bestValue) {
+            bestValue = boardValue;
+            bestMove = move;
+        }
+    }
+
+    let moveObj = game.move(bestMove);
+    board.position(game.fen());
+    updateGraveyard();
+    
+    // TRAP CHECK: Trigger insults based on what just happened
+    let botResponse = getBotInsult(moveObj);
+    $('#status').text(botResponse);
+    
+    resetStallTimer();
+}
+
+// Logic for specialized insult triggers
+function getBotInsult(move) {
+    if (move.captured === 'q') return insults.queenLoss;
+    if (!playerLostFirstPiece && move.captured) {
+        playerLostFirstPiece = true;
+        return insults.firstLoss;
+    }
+    return insults.general[Math.floor(Math.random() * insults.general.length)];
+}
+
+function onDrop(src, tgt) {
+    let move = game.move({ from: src, to: tgt, promotion: 'q' });
+    if (!move) return 'snapback';
+    
+    clearTimeout(moveTimer); // Stop the stall timer while bot calculates
+    updateGraveyard();
+    
+    // The bot stays silent while calculating (No "Processing" text)
+    window.setTimeout(makeBestMove, 250);
+}
+
+function undoMove() {
+    game.undo(); game.undo();
+    board.position(game.fen());
+    updateGraveyard();
+    let msg = insults.undo[Math.floor(Math.random() * insults.undo.length)];
+    $('#status').text(msg);
+    resetStallTimer();
+}
+
+// INITIALIZE THE BOARD
+board = Chessboard('board', {
+    draggable: true,
+    position: 'start',
+    onDrop: onDrop,
+    pieceTheme: pieceBaseUrl + '{piece}.png'
+});
+
+// START THE SYSTEM
+resetStallTimer();
