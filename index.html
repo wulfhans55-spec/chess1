@@ -9,28 +9,13 @@
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap');
 
         body { 
-            background: #000; 
-            color: #0f0; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            font-family: 'Share Tech Mono', monospace; 
-            padding: 10px;
-            margin: 0;
-            height: 100vh;
-            overflow: hidden; /* Prevents scrolling */
-            justify-content: center;
+            background: #000; color: #0f0; display: flex; flex-direction: column; align-items: center; 
+            font-family: 'Share Tech Mono', monospace; padding: 10px; margin: 0; height: 100vh; overflow: hidden; justify-content: center;
         }
 
-        /* COMPACT HEADER */
         .header { 
-            font-family: 'Orbitron', sans-serif;
-            font-size: 2rem; 
-            letter-spacing: 8px; 
-            color: #f00; 
-            text-shadow: 0 0 10px #f00;
-            margin-bottom: 5px;
-            animation: glitch 1s infinite;
+            font-family: 'Orbitron', sans-serif; font-size: 2rem; letter-spacing: 8px; color: #f00; 
+            text-shadow: 0 0 10px #f00; margin-bottom: 5px; animation: glitch 1s infinite;
         }
 
         @keyframes glitch {
@@ -39,52 +24,23 @@
             80% { opacity: 1; transform: skew(1deg); }
         }
 
-        /* WIDER INFO PANEL */
         .info-panel { 
-            background: rgba(15, 15, 15, 0.9); 
-            padding: 15px 30px; 
-            margin-bottom: 15px; 
-            text-align: center; 
-            width: 95vw; /* Fills the width */
-            max-width: 1000px; 
-            border: 1px solid #0f0;
-            box-sizing: border-box;
+            background: rgba(15, 15, 15, 0.9); padding: 15px 30px; margin-bottom: 15px; 
+            text-align: center; width: 95vw; max-width: 1000px; border: 1px solid #0f0; box-sizing: border-box;
         }
 
-        /* ADJUSTED FONT SIZE (1.5x Original) */
         #status { 
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 700; 
-            color: #0f0; 
-            font-size: 1.6rem; 
-            line-height: 1.2;
-            min-height: 2.5em; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            text-transform: uppercase; 
-            text-shadow: 1px 1px 0px #000;
+            font-family: 'Orbitron', sans-serif; font-weight: 700; color: #0f0; font-size: 1.6rem; 
+            line-height: 1.2; min-height: 2.5em; display: flex; align-items: center; justify-content: center; 
+            text-transform: uppercase; text-shadow: 1px 1px 0px #000;
         }
 
-        /* BOARD - SLIGHTLY SMALLER TO FIT SCREEN */
-        #board { 
-            width: 420px; 
-            max-width: 80vw; 
-            border: 3px solid #0f0; 
-            box-shadow: 0 0 20px #0f0; 
-        }
+        #board { width: 420px; max-width: 80vw; border: 3px solid #0f0; box-shadow: 0 0 20px #0f0; }
 
         .controls { margin-top: 15px; }
         button { 
-            background: #f00; 
-            color: #000; 
-            border: none; 
-            padding: 10px 25px; 
-            cursor: pointer; 
-            font-family: 'Orbitron', sans-serif; 
-            font-weight: bold; 
-            text-transform: uppercase; 
-            font-size: 1rem;
+            background: #f00; color: #000; border: none; padding: 10px 25px; cursor: pointer; 
+            font-family: 'Orbitron', sans-serif; font-weight: bold; text-transform: uppercase; font-size: 1rem;
         }
         button:hover { background: #0f0; }
     </style>
@@ -154,7 +110,14 @@
             }, 10000);
         }
 
-        // --- AI BRAIN ---
+        // --- ENHANCED AI ENGINE LEVEL 3.5 ---
+        // Square-table evaluations make the AI control the center
+        var weights = { p: 10, n: 30, b: 30, r: 50, q: 90, k: 900 };
+        var pst_w = {
+            p: [ [0,0,0,0,0,0,0,0],[5,5,5,5,5,5,5,5],[1,1,2,3,3,2,1,1],[0.5,0.5,1,2.5,2.5,1,0.5,0.5],[0,0,0,2,2,0,0,0],[0.5,-0.5,-1,0,0,-1,-0.5,0.5],[0.5,1,1,-2,-2,1,1,0.5],[0,0,0,0,0,0,0,0] ],
+            n: [ [-5,-4,-3,-3,-3,-3,-4,-5],[-4,-2,0,0,0,0,-2,-4],[-3,0,1,1.5,1.5,1,0,-3],[-3,0.5,1.5,2,2,1.5,0.5,-3],[-3,0,1.5,2,2,1.5,0,-3],[-3,0.5,1,1.5,1.5,1,0.5,-3],[-4,-2,0,0.5,0.5,0,-2,-4],[-5,-4,-3,-3,-3,-3,-4,-5] ]
+        };
+
         function evaluateBoard(game) {
             var totalEvaluation = 0;
             var board = game.board();
@@ -162,7 +125,10 @@
                 for (var j = 0; j < 8; j++) {
                     var piece = board[i][j];
                     if (piece) {
-                        var val = (piece.type === 'p' ? 10 : piece.type === 'n' ? 30 : piece.type === 'b' ? 30 : piece.type === 'r' ? 50 : piece.type === 'q' ? 90 : 900);
+                        var val = weights[piece.type];
+                        if (piece.type === 'p' || piece.type === 'n') {
+                            val += (piece.color === 'w' ? pst_w[piece.type][i][j] : pst_w[piece.type][7-i][j]);
+                        }
                         totalEvaluation += (piece.color === 'w' ? -val : val);
                     }
                 }
@@ -170,48 +136,55 @@
             return totalEvaluation;
         }
 
-        function minimax(depth, game, alpha, beta, isMaximisingPlayer) {
+        function minimax(depth, game, alpha, beta, isMaximizing) {
             if (depth === 0) return evaluateBoard(game);
             var moves = game.moves();
-            if (isMaximisingPlayer) {
-                var bestValue = -9999;
+            if (game.in_draw()) return isMaximizing ? -10000 : 10000;
+            
+            if (isMaximizing) {
+                var best = -10000;
                 for (var i = 0; i < moves.length; i++) {
                     game.move(moves[i]);
-                    bestValue = Math.max(bestValue, minimax(depth - 1, game, alpha, beta, !isMaximisingPlayer));
+                    best = Math.max(best, minimax(depth - 1, game, alpha, beta, !isMaximizing));
                     game.undo();
-                    alpha = Math.max(alpha, bestValue);
-                    if (beta <= alpha) return bestValue;
+                    alpha = Math.max(alpha, best);
+                    if (beta <= alpha) break;
                 }
-                return bestValue;
+                return best;
             } else {
-                var bestValue = 9999;
+                var best = 10000;
                 for (var i = 0; i < moves.length; i++) {
                     game.move(moves[i]);
-                    bestValue = Math.min(bestValue, minimax(depth - 1, game, alpha, beta, !isMaximisingPlayer));
+                    best = Math.min(best, minimax(depth - 1, game, alpha, beta, !isMaximizing));
                     game.undo();
-                    beta = Math.min(beta, bestValue);
-                    if (beta <= alpha) return bestValue;
+                    beta = Math.min(beta, best);
+                    if (beta <= alpha) break;
                 }
-                return bestValue;
+                return best;
             }
         }
 
         function makeBestMove() {
             var moves = game.moves();
             if (moves.length === 0) return;
+            
             var bestMove = null;
-            var bestValue = -9999;
+            var bestValue = -10000;
+
             for (var i = 0; i < moves.length; i++) {
                 game.move(moves[i]);
-                var boardValue = minimax(2, game, -10000, 10000, false);
+                // Depth 3 search for Level 3.5 strength
+                var boardValue = minimax(3, game, -10000, 10000, false);
                 game.undo();
                 if (boardValue > bestValue) {
                     bestValue = boardValue;
                     bestMove = moves[i];
                 }
             }
+
             var moveObj = game.move(bestMove);
             board.position(game.fen());
+
             if (moveObj.captured === 'q') $status.text("YOUR QUEEN LEFT YOU. DIVORCE COMING.");
             if (!playerLostFirstPiece && moveObj.captured) {
                 $status.text("PRUNING BEGINS. DON'T BE ATTACHED.");
@@ -224,6 +197,7 @@
             var move = game.move({ from: source, to: target, promotion: 'q' });
             if (move === null) return 'snapback';
             clearTimeout(moveTimer);
+            
             if (move.captured === 'q') {
                 $status.text("QUEEN LOST. DIDN'T NEED HER TO BEAT A HUMAN.");
             } else {
@@ -240,9 +214,7 @@
         }
 
         board = Chessboard('board', {
-            draggable: true,
-            position: 'start',
-            onDrop: onDrop,
+            draggable: true, position: 'start', onDrop: onDrop,
             pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
         });
         resetStallTimer();
