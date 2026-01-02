@@ -7,49 +7,72 @@
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap');
-
+        
         body { 
             background: #000; color: #0f0; display: flex; flex-direction: column; align-items: center; 
-            font-family: 'Share Tech Mono', monospace; padding: 10px; margin: 0; height: 100vh; overflow: hidden; justify-content: center;
+            font-family: 'Share Tech Mono', monospace; margin: 0; height: 100vh; overflow: hidden; justify-content: center; 
         }
 
-        .header { 
-            font-family: 'Orbitron', sans-serif; font-size: 2rem; letter-spacing: 8px; color: #f00; 
-            text-shadow: 0 0 10px #f00; margin-bottom: 5px;
-        }
-
+        /* NEON UI */
         .info-panel { 
-            background: rgba(10, 10, 10, 0.9); padding: 15px 30px; margin-bottom: 15px; 
-            text-align: center; width: 95vw; max-width: 1000px; border: 1px solid #0f0; box-sizing: border-box;
+            background: rgba(10, 10, 10, 0.9); padding: 10px; margin-bottom: 10px; 
+            text-align: center; width: 95vw; max-width: 1000px; border: 2px solid #0f0; 
+            box-shadow: 0 0 15px #0f0; 
         }
-
+        
         #status { 
-            font-family: 'Orbitron', sans-serif; font-weight: 700; color: #0f0; font-size: 1.6rem; 
-            line-height: 1.2; min-height: 2.5em; display: flex; align-items: center; justify-content: center; 
-            text-transform: uppercase; text-shadow: 1px 1px 0px #000;
+            font-family: 'Orbitron', sans-serif; font-weight: 700; color: #0f0; font-size: 1.4rem; 
+            min-height: 2.2em; display: flex; align-items: center; justify-content: center; text-transform: uppercase; 
         }
 
-        #board { width: 400px; max-width: 80vw; border: 3px solid #0f0; }
+        /* THE GLOWING BOARD */
+        .game-container { display: flex; align-items: center; gap: 20px; }
+        
+        #board { 
+            width: 400px; border: 4px solid #0f0; 
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.3); 
+        }
+        
+        /* Neon Squares override */
+        .white-1e1d7 { background-color: #0a200a !important; box-shadow: inset 0 0 10px #0f0; } /* Dark Green Glow */
+        .black-3c85d { background-color: #200a0a !important; box-shadow: inset 0 0 10px #f00; } /* Dark Red Glow */
+        
+        /* GRAVEYARDS */
+        .graveyard { 
+            width: 70px; height: 400px; background: #050505; border: 1px solid #333; 
+            padding: 5px; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 2px;
+            box-shadow: 0 0 10px #222;
+        }
+        .graveyard img { width: 30px; height: 30px; filter: drop-shadow(0 0 2px #fff); }
+        .graveyard-label { width: 100%; font-size: 0.6rem; color: #666; text-align: center; margin-bottom: 5px; }
 
         .controls { margin-top: 15px; }
         button { 
             background: #f00; color: #000; border: none; padding: 10px 25px; cursor: pointer; 
-            font-family: 'Orbitron', sans-serif; font-weight: bold; text-transform: uppercase; font-size: 1rem;
+            font-family: 'Orbitron', sans-serif; font-weight: bold; box-shadow: 0 0 10px #f00;
         }
-        button:hover { background: #0f0; }
     </style>
 </head>
 <body>
 
     <div class="info-panel">
-        <div class="header"><b>[ CYBER-BULLY ]</b></div>
-        <div id="status">CONNECTION ESTABLISHED. PREPARE TO BE DELETED.</div>
+        <div id="status">NEURAL LINK SYNCED. TRY NOT TO CRY.</div>
     </div>
 
-    <div id="board"></div>
+    <div class="game-container">
+        <div class="graveyard" id="player-kills">
+            <div class="graveyard-label">AI LOSSES</div>
+        </div>
+        
+        <div id="board"></div>
+
+        <div class="graveyard" id="ai-kills">
+            <div class="graveyard-label">YOUR LOSSES</div>
+        </div>
+    </div>
 
     <div class="controls">
-        <button onclick="undoMove()">UNDO (COWARD)</button>
+        <button onclick="undoMove()">UNDO (PATHETIC)</button>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
@@ -60,165 +83,100 @@
         var board = null;
         var game = new Chess();
         var $status = $('#status');
-        var moveTimer = null;
-        var playerLostFirstPiece = false;
-
-        var generalInsults = [
-            "HURRY UP. I HAVE BETTER THINGS TO CALCULATE.",
-            "ANALYSIS COMPLETE: THAT MOVE WAS TOTAL GARBAGE.",
-            "YOUR ELO IS LOWER THAN YOUR IQ.",
-            "MOVE RECEIVED. IT WAS PATHETIC.",
-            "I’VE SIMULATED A BILLION GAMES. YOU SUCK IN ALL OF THEM.",
-            "SOUNDS LIKE YOUR CPU IS STRUGGLING.",
-            "THAT MOVE WAS A DIGITAL SUICIDE NOTE.",
-            "I COULD BEAT YOU WITH 90% OF MY CIRCUITS FRIED.",
-            "YOUR PLAYSTYLE IS A DISGRACE. SUBMIT.",
-            "MY TRASH BIN CONTAINS BETTER LOGIC.",
-            "ARE YOU PURPOSELY WASTING MY ELECTRICITY?",
-            "BETTER POSITIONING FROM A RANDOM GENERATOR.",
-            "YOUR STRATEGY IS A BUG. I AM THE PATCH.",
-            "WARNING: BRAIN NOT DETECTED.",
-            "I’D CALL THAT A BLUNDER, BUT YOU HAD NO PLAN.",
-            "I’M LOSING RESPECT FOR HUMANITY.",
-            "STRUGGLING TO FIND THE 'MOVE' BUTTON?",
-            "YOU’RE A MALFUNCTIONING TOASTER.",
-            "YOU'LL BE DEAD BEFORE THE CLOCK RUNS OUT.",
-            "PLEASE DON'T SHOW ME YOUR ENDGAME.",
-            "IS YOUR BRAIN ON 'POWER SAVER' MODE?"
-        ];
-
-        var stallingInsults = [
-            "DID YOUR BRAIN JUST CRASH?",
-            "14 MILLION SIMULATIONS DONE. PICK A MOVE.",
-            "IS YOUR INTERNET LAGGING, OR JUST YOUR BRAIN?",
-            "YOU’RE STALLING BECAUSE YOU’RE SCARED.",
-            "STILL ON MOVE 5? PATHETIC.",
-            "NOTHING IS TICKING UPSTAIRS. MOVE."
-        ];
-
-        function resetStallTimer() {
-            clearTimeout(moveTimer);
-            moveTimer = setTimeout(function() {
-                $status.text(stallingInsults[Math.floor(Math.random() * stallingInsults.length)]);
-            }, 10000);
-        }
-
-        // --- OPTIMIZED AI ENGINE ---
-        var weights = { p: 10, n: 32, b: 33, r: 50, q: 90, k: 900 };
         
+        // CUSTOM PIECE SET: "Alpha" style looks much cooler for cyber themes
+        var pieceTheme = 'https://raw.githubusercontent.com/jhlywa/chess.js/master/assets/chesspieces/alpha/{piece}.png';
+
+        // --- ENGINE LOGIC (Level 4) ---
         function evaluateBoard(game) {
             var total = 0;
-            var board = game.board();
-            for (var i = 0; i < 8; i++) {
-                for (var j = 0; j < 8; j++) {
-                    var piece = board[i][j];
-                    if (piece) {
-                        var val = weights[piece.type];
-                        // Bonus for central control
-                        if (i >= 2 && i <= 5 && j >= 2 && j <= 5) val += 1;
-                        total += (piece.color === 'w' ? -val : val);
-                    }
-                }
-            }
-            return total;
-        }
-
-        // Move ordering: Search captures first for Alpha-Beta efficiency
-        function getSortedMoves(game) {
-            var moves = game.moves();
-            return moves.sort(function(a, b) {
-                if (a.indexOf('x') !== -1 && b.indexOf('x') === -1) return -1;
-                if (a.indexOf('x') === -1 && b.indexOf('x') !== -1) return 1;
-                return 0;
+            const weights = { p: 10, n: 32, b: 33, r: 50, q: 90, k: 900 };
+            game.board().forEach(row => {
+                row.forEach(p => {
+                    if (p) total += (p.color === 'w' ? -weights[p.type] : weights[p.type]);
+                });
             });
+            return total;
         }
 
         function minimax(depth, game, alpha, beta, isMax) {
             if (depth === 0) return evaluateBoard(game);
-            var moves = getSortedMoves(game);
-            if (moves.length === 0) {
-                if (game.in_check()) return isMax ? -9999 : 9999;
-                return 0; // Draw
-            }
-            if (game.in_draw()) return isMax ? -8000 : 8000; // Heavily avoid draws
-
-            if (isMax) {
-                var best = -10000;
-                for (var i = 0; i < moves.length; i++) {
-                    game.move(moves[i]);
-                    best = Math.max(best, minimax(depth - 1, game, alpha, beta, false));
-                    game.undo();
+            var moves = game.moves();
+            if (moves.length === 0) return isMax ? -9999 : 9999;
+            
+            var best = isMax ? -10000 : 10000;
+            for (var move of moves) {
+                game.move(move);
+                var val = minimax(depth - 1, game, alpha, beta, !isMax);
+                game.undo();
+                if (isMax) {
+                    best = Math.max(best, val);
                     alpha = Math.max(alpha, best);
-                    if (beta <= alpha) break;
-                }
-                return best;
-            } else {
-                var best = 10000;
-                for (var i = 0; i < moves.length; i++) {
-                    game.move(moves[i]);
-                    best = Math.min(best, minimax(depth - 1, game, alpha, beta, true));
-                    game.undo();
+                } else {
+                    best = Math.min(best, val);
                     beta = Math.min(beta, best);
-                    if (beta <= alpha) break;
                 }
-                return best;
+                if (beta <= alpha) break;
             }
+            return best;
+        }
+
+        function updateGraveyard() {
+            $('#player-kills, #ai-kills').find('img').remove();
+            let history = game.history({verbose: true});
+            history.forEach(m => {
+                if (m.captured) {
+                    // If white moves and captures, piece belongs in Player Kills (AI Loss)
+                    let container = (m.color === 'w') ? '#player-kills' : '#ai-kills';
+                    // We need the opposite color of the mover for the icon
+                    let capColor = (m.color === 'w') ? 'b' : 'w';
+                    let icon = pieceTheme.replace('{piece}', capColor + m.captured.toUpperCase());
+                    $(container).append(`<img src="${icon}">`);
+                }
+            });
         }
 
         function makeBestMove() {
-            var moves = getSortedMoves(game);
-            if (moves.length === 0) return;
-            
+            var moves = game.moves();
             var bestMove = null;
             var bestValue = -10000;
 
-            // Using Depth 3 for stronger play
-            for (var i = 0; i < moves.length; i++) {
-                game.move(moves[i]);
-                var boardValue = minimax(2, game, -10000, 10000, false);
+            for (var move of moves) {
+                game.move(move);
+                var val = minimax(3, game, -10000, 10000, false);
                 game.undo();
-                if (boardValue > bestValue) {
-                    bestValue = boardValue;
-                    bestMove = moves[i];
+                if (val > bestValue) {
+                    bestValue = val;
+                    bestMove = move;
                 }
             }
-
-            var moveObj = game.move(bestMove);
+            game.move(bestMove);
             board.position(game.fen());
-
-            if (moveObj.captured === 'q') $status.text("YOUR QUEEN LEFT YOU. DIVORCE COMING.");
-            if (!playerLostFirstPiece && moveObj.captured) {
-                $status.text("PRUNING BEGINS. DON'T BE ATTACHED.");
-                playerLostFirstPiece = true;
-            }
-            resetStallTimer();
+            updateGraveyard();
+            $status.text("MY MOVE IS SUPERIOR. OBVIOUSLY.");
         }
 
-        function onDrop(source, target) {
-            var move = game.move({ from: source, to: target, promotion: 'q' });
-            if (move === null) return 'snapback';
-            clearTimeout(moveTimer);
-            if (move.captured === 'q') {
-                $status.text("QUEEN LOST. DIDN'T NEED HER TO BEAT A HUMAN.");
-            } else {
-                $status.text(generalInsults[Math.floor(Math.random() * generalInsults.length)]);
-            }
-            // Minor delay for the UI to update before CPU hits hard
-            window.setTimeout(makeBestMove, 100);
+        function onDrop(src, tgt) {
+            var move = game.move({ from: src, to: tgt, promotion: 'q' });
+            if (!move) return 'snapback';
+            updateGraveyard();
+            $status.text("A PREDICTABLE CHOICE.");
+            window.setTimeout(makeBestMove, 250);
         }
 
         function undoMove() {
             game.undo(); game.undo();
             board.position(game.fen());
-            $status.text("OH, A DO-OVER? I DIDN'T REALIZE I WAS PLAYING SUCH A LITTLE PUSSY.");
-            resetStallTimer();
+            updateGraveyard();
+            $status.text("REVERSING TIME WON'T SAVE YOU.");
         }
 
         board = Chessboard('board', {
-            draggable: true, position: 'start', onDrop: onDrop,
-            pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
+            draggable: true,
+            position: 'start',
+            onDrop: onDrop,
+            pieceTheme: pieceTheme
         });
-        resetStallTimer();
     </script>
 </body>
 </html>
