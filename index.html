@@ -190,7 +190,7 @@
             let bestValue = -Infinity;
             for (let move of moves) {
                 game.move(move);
-                let val = minimax(3, game, -Infinity, Infinity, false);
+                let val = minimax(2, game, -Infinity, Infinity, false);
                 game.undo();
                 if (val > bestValue) { bestValue = val; bestMove = move; }
             }
