@@ -22,7 +22,7 @@
         
         #status { 
             font-family: 'Orbitron', sans-serif; font-weight: 700; color: #0f0; font-size: 1.4rem; 
-            min-height: 2.2em; display: flex; align-items: center; justify-content: center; text-transform: uppercase; 
+            min-height: 2.5em; display: flex; align-items: center; justify-content: center; text-transform: uppercase; 
         }
 
         /* THE GLOWING BOARD */
@@ -32,42 +32,48 @@
             width: 400px; border: 4px solid #0f0; 
             box-shadow: 0 0 30px rgba(0, 255, 0, 0.3); 
         }
+
+        /* PIECE STYLING - Makes them look neon */
+        .piece-417db {
+            filter: drop-shadow(0 0 2px #fff) brightness(1.2);
+        }
         
-        /* Neon Squares override */
-        .white-1e1d7 { background-color: #0a200a !important; box-shadow: inset 0 0 10px #0f0; } /* Dark Green Glow */
-        .black-3c85d { background-color: #200a0a !important; box-shadow: inset 0 0 10px #f00; } /* Dark Red Glow */
+        /* Neon Squares */
+        .white-1e1d7 { background-color: #0a200a !important; box-shadow: inset 0 0 15px #0f0; } 
+        .black-3c85d { background-color: #200a0a !important; box-shadow: inset 0 0 15px #f00; } 
         
         /* GRAVEYARDS */
         .graveyard { 
-            width: 70px; height: 400px; background: #050505; border: 1px solid #333; 
+            width: 75px; height: 400px; background: #050505; border: 1px solid #0f0; 
             padding: 5px; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 2px;
-            box-shadow: 0 0 10px #222;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
         }
-        .graveyard img { width: 30px; height: 30px; filter: drop-shadow(0 0 2px #fff); }
-        .graveyard-label { width: 100%; font-size: 0.6rem; color: #666; text-align: center; margin-bottom: 5px; }
+        .graveyard img { width: 32px; height: 32px; filter: drop-shadow(0 0 2px #0f0); }
+        .graveyard-label { width: 100%; font-size: 0.7rem; color: #f00; text-align: center; margin-bottom: 10px; font-weight: bold; }
 
         .controls { margin-top: 15px; }
         button { 
             background: #f00; color: #000; border: none; padding: 10px 25px; cursor: pointer; 
             font-family: 'Orbitron', sans-serif; font-weight: bold; box-shadow: 0 0 10px #f00;
         }
+        button:hover { background: #0f0; box-shadow: 0 0 15px #0f0; }
     </style>
 </head>
 <body>
 
     <div class="info-panel">
-        <div id="status">NEURAL LINK SYNCED. TRY NOT TO CRY.</div>
+        <div id="status">CONNECTION ESTABLISHED. LEVEL 4 READY.</div>
     </div>
 
     <div class="game-container">
         <div class="graveyard" id="player-kills">
-            <div class="graveyard-label">AI LOSSES</div>
+            <div class="graveyard-label">AI DELETED</div>
         </div>
         
         <div id="board"></div>
 
         <div class="graveyard" id="ai-kills">
-            <div class="graveyard-label">YOUR LOSSES</div>
+            <div class="graveyard-label">USER DELETED</div>
         </div>
     </div>
 
@@ -84,13 +90,25 @@
         var game = new Chess();
         var $status = $('#status');
         
-        // CUSTOM PIECE SET: "Alpha" style looks much cooler for cyber themes
-        var pieceTheme = 'https://raw.githubusercontent.com/jhlywa/chess.js/master/assets/chesspieces/alpha/{piece}.png';
+        // Use the most stable piece set URL
+        var pieceBaseUrl = 'https://chessboardjs.com/img/chesspieces/wikipedia/';
 
-        // --- ENGINE LOGIC (Level 4) ---
+        const generalInsults = [
+            "HURRY UP. I HAVE BETTER THINGS TO CALCULATE.",
+            "ANALYSIS COMPLETE: THAT MOVE WAS TOTAL GARBAGE.",
+            "YOUR ELO IS LOWER THAN YOUR IQ.",
+            "I COULD BEAT YOU WITH 90% OF MY CIRCUITS FRIED.",
+            "YOUR STRATEGY IS A BUG. I AM THE PATCH.",
+            "IS YOUR BRAIN ON 'POWER SAVER' MODE?",
+            "THAT MOVE WAS A DIGITAL SUICIDE NOTE.",
+            "I’VE SEEN BETTER LOGIC FROM A TOASTER."
+        ];
+
+        // --- LEVEL 4 AI ENGINE ---
+        const weights = { p: 10, n: 32, b: 33, r: 50, q: 90, k: 900 };
+
         function evaluateBoard(game) {
             var total = 0;
-            const weights = { p: 10, n: 32, b: 33, r: 50, q: 90, k: 900 };
             game.board().forEach(row => {
                 row.forEach(p => {
                     if (p) total += (p.color === 'w' ? -weights[p.type] : weights[p.type]);
@@ -126,12 +144,10 @@
             let history = game.history({verbose: true});
             history.forEach(m => {
                 if (m.captured) {
-                    // If white moves and captures, piece belongs in Player Kills (AI Loss)
                     let container = (m.color === 'w') ? '#player-kills' : '#ai-kills';
-                    // We need the opposite color of the mover for the icon
                     let capColor = (m.color === 'w') ? 'b' : 'w';
-                    let icon = pieceTheme.replace('{piece}', capColor + m.captured.toUpperCase());
-                    $(container).append(`<img src="${icon}">`);
+                    let pImg = capColor + m.captured.toUpperCase() + '.png';
+                    $(container).append(`<img src="${pieceBaseUrl}${pImg}">`);
                 }
             });
         }
@@ -150,17 +166,30 @@
                     bestMove = move;
                 }
             }
-            game.move(bestMove);
+            
+            let mObj = game.move(bestMove);
             board.position(game.fen());
             updateGraveyard();
-            $status.text("MY MOVE IS SUPERIOR. OBVIOUSLY.");
+
+            if (mObj.captured === 'q') {
+                $status.text("Your Queen just left you. Even my algorithms saw that divorce coming.");
+            } else {
+                $status.text(generalInsults[Math.floor(Math.random() * generalInsults.length)]);
+            }
         }
 
         function onDrop(src, tgt) {
             var move = game.move({ from: src, to: tgt, promotion: 'q' });
             if (!move) return 'snapback';
+            
             updateGraveyard();
-            $status.text("A PREDICTABLE CHOICE.");
+            
+            if (move.captured === 'q') {
+                $status.text("Error: Queen lost. Just kidding, I didn't need her to beat a human like you.");
+            } else {
+                $status.text("PROCESSING...");
+            }
+            
             window.setTimeout(makeBestMove, 250);
         }
 
@@ -168,14 +197,14 @@
             game.undo(); game.undo();
             board.position(game.fen());
             updateGraveyard();
-            $status.text("REVERSING TIME WON'T SAVE YOU.");
+            $status.text("ONLY A PUSSY WOULD UNDO.");
         }
 
         board = Chessboard('board', {
             draggable: true,
             position: 'start',
             onDrop: onDrop,
-            pieceTheme: pieceTheme
+            pieceTheme: pieceBaseUrl + '{piece}.png'
         });
     </script>
 </body>
