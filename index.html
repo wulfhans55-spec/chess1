@@ -13,6 +13,7 @@
             font-family: 'Share Tech Mono', monospace; margin: 0; height: 100vh; overflow: hidden; justify-content: center; 
         }
 
+        /* MASSIVE HEADER */
         .header { 
             font-family: 'Orbitron', sans-serif; font-size: 2.2rem; letter-spacing: 8px; color: #f00; 
             text-shadow: 0 0 10px #f00; margin-bottom: 5px; animation: glitch 1s infinite;
@@ -24,37 +25,45 @@
             80% { opacity: 1; transform: skew(1deg); }
         }
 
+        /* WIDE INFO PANEL */
         .info-panel { 
             background: rgba(10, 10, 10, 0.9); padding: 15px; margin-bottom: 15px; 
             text-align: center; width: 95vw; max-width: 1100px; border: 2px solid #0f0; 
+            box-shadow: 0 0 15px #0f0;
         }
         
+        /* 1.5x - 1.8x ORIGINAL FONT SIZE */
         #status { 
             font-family: 'Orbitron', sans-serif; font-weight: 900; color: #0f0; font-size: 1.8rem; 
             min-height: 2.5em; display: flex; align-items: center; justify-content: center; text-transform: uppercase; 
+            text-shadow: 2px 2px 0px #000;
         }
 
         .game-container { display: flex; align-items: center; gap: 20px; }
         
+        /* GLOWING BOARD */
         #board { width: 400px; border: 4px solid #0f0; box-shadow: 0 0 20px #0f0; }
 
-        /* Neon Squares */
+        /* NEON SQUARES */
         .white-1e1d7 { background-color: #0a200a !important; box-shadow: inset 0 0 15px #0f0; } 
         .black-3c85d { background-color: #200a0a !important; box-shadow: inset 0 0 15px #f00; } 
         
-        /* Graveyards */
+        /* GRAVEYARDS */
         .graveyard { 
             width: 80px; height: 400px; background: #050505; border: 1px solid #0f0; 
             padding: 5px; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 2px;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
         }
         .graveyard img { width: 32px; height: 32px; filter: drop-shadow(0 0 2px #0f0); }
         .graveyard-label { width: 100%; font-size: 0.7rem; color: #f00; text-align: center; margin-bottom: 5px; font-weight: bold; }
 
         .controls { margin-top: 15px; }
         button { 
-            background: #f00; color: #000; border: none; padding: 10px 25px; cursor: pointer; 
+            background: #f00; color: #000; border: none; padding: 12px 30px; cursor: pointer; 
             font-family: 'Orbitron', sans-serif; font-weight: bold; text-transform: uppercase;
+            box-shadow: 0 0 10px #f00;
         }
+        button:hover { background: #0f0; box-shadow: 0 0 15px #0f0; }
     </style>
 </head>
 <body>
@@ -65,16 +74,23 @@
     </div>
 
     <div class="game-container">
-        <div class="graveyard" id="player-kills"><div class="graveyard-label">AI LOSSES</div></div>
+        <div class="graveyard" id="player-kills">
+            <div class="graveyard-label">AI LOSSES</div>
+        </div>
+        
         <div id="board"></div>
-        <div class="graveyard" id="ai-kills"><div class="graveyard-label">YOUR LOSSES</div></div>
+
+        <div class="graveyard" id="ai-kills">
+            <div class="graveyard-label">YOUR LOSSES</div>
+        </div>
     </div>
 
     <div class="controls">
         <button onclick="undoMove()">UNDO (COWARD)</button>
     </div>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    ```
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
     <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
 
@@ -82,30 +98,56 @@
         var board = null;
         var game = new Chess();
         var $status = $('#status');
-        var playerLostFirstPiece = false;
         var moveTimer = null;
+        var playerLostFirstPiece = false;
         var pieceBaseUrl = 'https://chessboardjs.com/img/chesspieces/wikipedia/';
 
         const generalInsults = [
             "HURRY UP. I HAVE BETTER THINGS TO CALCULATE.",
             "ANALYSIS COMPLETE: THAT MOVE WAS TOTAL GARBAGE.",
             "YOUR ELO IS LOWER THAN YOUR IQ.",
-            "I COULD BEAT YOU WITH 90% OF MY CIRCUITS FRIED.",
-            "YOUR STRATEGY IS A BUG. I AM THE PATCH.",
-            "IS YOUR BRAIN ON 'POWER SAVER' MODE?",
+            "MOVE RECEIVED. IT WAS PATHETIC.",
+            "I’VE SIMULATED A BILLION GAMES. YOU SUCK IN ALL OF THEM.",
+            "SOUNDS LIKE YOUR CPU IS STRUGGLING.",
             "THAT MOVE WAS A DIGITAL SUICIDE NOTE.",
-            "I’VE SEEN BETTER LOGIC FROM A TOASTER."
+            "I COULD BEAT YOU WITH 90% OF MY CIRCUITS FRIED.",
+            "YOUR PLAYSTYLE IS A DISGRACE. SUBMIT.",
+            "MY TRASH BIN CONTAINS BETTER LOGIC.",
+            "ARE YOU PURPOSELY WASTING MY ELECTRICITY?",
+            "BETTER POSITIONING FROM A RANDOM GENERATOR.",
+            "YOUR STRATEGY IS A BUG. I AM THE PATCH.",
+            "WARNING: BRAIN NOT DETECTED.",
+            "I’M LOSING RESPECT FOR HUMANITY.",
+            "STRUGGLING TO FIND THE 'MOVE' BUTTON?",
+            "YOU’RE A MALFUNCTIONING TOASTER.",
+            "YOU'LL BE DEAD BEFORE THE CLOCK RUNS OUT.",
+            "PLEASE DON'T SHOW ME YOUR ENDGAME.",
+            "IS YOUR BRAIN ON 'POWER SAVER' MODE?"
+        ];
+
+        const stallingInsults = [
+            "DID YOUR BRAIN JUST CRASH?",
+            "14 MILLION SIMULATIONS DONE. PICK A MOVE.",
+            "IS YOUR INTERNET LAGGING, OR JUST YOUR BRAIN?",
+            "YOU’RE STALLING BECAUSE YOU’RE SCARED.",
+            "STILL ON MOVE 5? PATHETIC.",
+            "NOTHING IS TICKING UPSTAIRS. MOVE."
         ];
 
         function resetStallTimer() {
             clearTimeout(moveTimer);
-            moveTimer = setTimeout(() => { $status.text("DID YOUR BRAIN JUST CRASH? MOVE."); }, 10000);
+            moveTimer = setTimeout(() => {
+                $status.text(stallingInsults[Math.floor(Math.random() * stallingInsults.length)]);
+            }, 10000);
         }
 
+        // --- LEVEL 4 AI ENGINE ---
+        const weights = { p: 10, n: 32, b: 33, r: 50, q: 90, k: 900 };
         function evaluateBoard(game) {
             var total = 0;
-            const weights = { p: 10, n: 32, b: 33, r: 50, q: 90, k: 900 };
-            game.board().forEach(row => { row.forEach(p => { if (p) total += (p.color === 'w' ? -weights[p.type] : weights[p.type]); }); });
+            game.board().forEach(row => {
+                row.forEach(p => { if (p) total += (p.color === 'w' ? -weights[p.type] : weights[p.type]); });
+            });
             return total;
         }
 
@@ -151,7 +193,7 @@
             updateGraveyard();
             
             if (mObj.captured === 'q') {
-                $status.text("Your Queen just left you. Even my algorithms saw that divorce coming.");
+                $status.text("YOUR QUEEN JUST LEFT YOU. EVEN MY ALGORITHMS SAW THAT DIVORCE COMING.");
             } else if (!playerLostFirstPiece && mObj.captured) {
                 $status.text("PRUNING BEGINS. DON'T BE ATTACHED.");
                 playerLostFirstPiece = true;
@@ -166,7 +208,7 @@
             if (!move) return 'snapback';
             clearTimeout(moveTimer);
             updateGraveyard();
-            $status.text("PROCESSING..."); // Bot thinking instruction
+            // No "Processing" message—bot stays silent until it moves
             window.setTimeout(makeBestMove, 250);
         }
 
@@ -174,7 +216,13 @@
             game.undo(); game.undo();
             board.position(game.fen());
             updateGraveyard();
-            $status.text("ONLY A PUSSY WOULD UNDO.");
+            const undoLines = [
+                "ONLY A PUSSY WOULD UNDO.",
+                "OH, A DO-OVER? I DIDN'T REALIZE I WAS PLAYING SUCH A LITTLE PUSSY.",
+                "MOVE RETRACTED. MY SENSORS INDICATE YOU’RE BEING A TOTAL PUSSY RIGHT NOW."
+            ];
+            $status.text(undoLines[Math.floor(Math.random() * undoLines.length)]);
+            resetStallTimer();
         }
 
         board = Chessboard('board', {
