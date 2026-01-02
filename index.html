@@ -163,3 +163,83 @@
     }
     button:hover { background: #0f0; box-shadow: 0 0 20px #0f0; transform: scale(1.05); }
 </style>
+    // --- PART 3: LEVEL 4 AI CORE ---
+
+// Advanced Piece Weighting for Level 4 Strategic Play
+const weights = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
+
+// Positional bonuses: Bot prefers to control the center (e.g., d4, e4, d5, e5)
+function evaluateBoard(game) {
+    let total = 0;
+    const board = game.board();
+    for (let i = 0; i < 8; i++) {
+        for (let j = 0; j < 8; j++) {
+            const piece = board[i][j];
+            if (piece) {
+                let val = weights[piece.type];
+                // Center control bonus
+                if (i >= 3 && i <= 4 && j >= 3 && j <= 4) val += 15;
+                total += (piece.color === 'w' ? -val : val);
+            }
+        }
+    }
+    return total;
+}
+
+// Quiescence Search: Prevents the "Horizon Effect" 
+// (Stops the AI from making dumb moves by calculating captures until the board is quiet)
+function quiescence(game, alpha, beta, isMax) {
+    let stand_pat = evaluateBoard(game);
+    if (isMax) {
+        if (stand_pat >= beta) return beta;
+        if (alpha < stand_pat) alpha = stand_pat;
+    } else {
+        if (stand_pat <= alpha) return alpha;
+        if (beta > stand_pat) beta = stand_pat;
+    }
+
+    let moves = game.moves().filter(m => m.includes('x')); // Only check captures
+    for (let move of moves) {
+        game.move(move);
+        let score = quiescence(game, alpha, beta, !isMax);
+        game.undo();
+        if (isMax) {
+            if (score >= beta) return beta;
+            if (score > alpha) alpha = score;
+        } else {
+            if (score <= alpha) return alpha;
+            if (score < beta) beta = score;
+        }
+    }
+    return isMax ? alpha : beta;
+}
+
+// Minimax with Alpha-Beta Pruning
+function minimax(depth, game, alpha, beta, isMax) {
+    if (depth === 0) return quiescence(game, alpha, beta, isMax);
+    
+    // Sort moves: Check captures first to speed up the "pruning" process
+    let moves = game.moves().sort((a, b) => b.includes('x') - a.includes('x'));
+    
+    if (moves.length === 0) {
+        if (game.in_check()) return isMax ? -99999 : 99999;
+        return 0; // Draw
+    }
+
+    let bestScore = isMax ? -Infinity : Infinity;
+    for (let move of moves) {
+        game.move(move);
+        let score = minimax(depth - 1, game, alpha, beta, !isMax);
+        game.undo();
+        
+        if (isMax) {
+            bestScore = Math.max(bestScore, score);
+            alpha = Math.max(alpha, bestScore);
+        } else {
+            bestScore = Math.min(bestScore, score);
+            beta = Math.min(beta, bestScore);
+        }
+        if (beta <= alpha) break; // Pruning: Skip branches that won't change the outcome
+    }
+    return bestScore;
+}
