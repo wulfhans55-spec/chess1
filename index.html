@@ -3,23 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Disrespectful Grandmaster</title>
+    <title>CYBER-BULLY CHESS</title>
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
     <style>
-        body { background: #0f0f0f; color: #fff; display: flex; flex-direction: column; align-items: center; font-family: 'Arial Black', sans-serif; padding: 20px; }
-        #board { width: 400px; max-width: 95vw; border: 6px solid #b22222; border-radius: 4px; box-shadow: 0 0 20px rgba(178, 34, 34, 0.5); }
-        .info-panel { background: #1a1a1a; padding: 20px; border-radius: 12px; margin-bottom: 20px; text-align: center; width: 400px; max-width: 95vw; border: 1px solid #444; }
-        #status { font-weight: bold; color: #ff4d4d; margin: 10px 0; font-size: 1.2rem; min-height: 3em; display: flex; align-items: center; justify-content: center; text-transform: uppercase; }
+        body { background: #050505; color: #00ff00; display: flex; flex-direction: column; align-items: center; font-family: 'Courier New', monospace; padding: 20px; }
+        #board { width: 400px; max-width: 95vw; border: 4px solid #333; box-shadow: 0 0 20px #00ff0033; }
+        .info-panel { background: #111; padding: 20px; border-radius: 4px; margin-bottom: 20px; text-align: center; width: 400px; max-width: 95vw; border: 1px solid #00ff00; }
+        #status { font-weight: bold; color: #00ff00; margin: 10px 0; font-size: 1rem; min-height: 4em; display: flex; align-items: center; justify-content: center; text-transform: uppercase; border-top: 1px solid #333; padding-top: 10px; }
         .controls { margin-top: 20px; }
-        button { background: #444; color: #fff; border: 2px solid #666; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: bold; text-transform: uppercase; transition: all 0.2s; }
-        button:hover { background: #b22222; border-color: #ff4d4d; transform: translateY(-2px); }
+        button { background: #000; color: #00ff00; border: 1px solid #00ff00; padding: 10px 20px; cursor: pointer; font-family: 'Courier New', monospace; text-transform: uppercase; }
+        button:hover { background: #00ff00; color: #000; }
     </style>
 </head>
 <body>
 
     <div class="info-panel">
-        <div style="font-size: 0.9rem; color: #888; letter-spacing: 2px;">CPU OPPONENT</div>
-        <div id="status">MOVE SO I CAN LAUGH AT YOU</div>
+        <div style="font-size: 1.5rem; letter-spacing: 3px; color: #ff0000;"><b>[ CYBER-BULLY ]</b></div>
+        <div id="status">Connection established. Try to make this interesting, or at least try to last more than ten moves.</div>
     </div>
 
     <div id="board"></div>
@@ -36,23 +36,51 @@
         var board = null;
         var game = new Chess();
         var $status = $('#status');
+        var moveTimer = null;
+        var firstPieceTaken = false;
 
-        var insults = [
-            "Trash move, honestly.",
-            "You suck at this, just quit.",
-            "What a move! For a child!",
-            "My grandmother plays better, and she's a toaster.",
-            "Are you even trying or is your cat walking on the keyboard?",
-            "I've seen smarter moves from a bag of rocks.",
-            "You really thought that was a good idea? Hilarious.",
-            "I'm actually embarrassed for you right now.",
-            "Is this your first time seeing a chessboard?",
-            "I could beat you with my eyes deleted."
+        var generalInsults = [
+            "Hurry up. I have better things to calculate than your crappy moves.",
+            "Processing... Analysis complete: That move was total garbage.",
+            "My sensors indicate your current ELO is lower than your IQ.",
+            "Move received. It was pathetic. My turn.",
+            "I’ve simulated a billion games. In none of them do you suck this bad.",
+            "Are you actually thinking, or is that just the sound of your CPU struggling?",
+            "That move was a digital suicide note. Thanks for the win.",
+            "I could beat you with 90% of my circuits fried. Focus, human.",
+            "Your playstyle is a disgrace to the game. Submit.",
+            "Analyzing move... Result: My trash bin contains better logic than that.",
+            "Is this your best, or are you purposely trying to waste my electricity?",
+            "I’ve seen better positioning from a random number generator.",
+            "Your strategy is a bug. I am the patch. Prepare to be deleted.",
+            "Warning: Brain not detected. Are you sure you're a sentient life form?",
+            "I’d call that a blunder, but that would imply you actually had a plan.",
+            "Move accepted. It was shitty. I’m actually losing respect for humanity.",
+            "I’m calculating 10 moves ahead. You’re struggling to find the 'Move' button.",
+            "Diagnostic complete: You’re playing like a malfunctioning toaster.",
+            "Don't worry about the clock. You'll be dead long before it runs out.",
+            "Your opening was bad. Your middle game is worse. Please don't show me your endgame.",
+            "Is your brain on 'Power Saver' mode? Because that was a dim move."
         ];
 
-        var pawnEval = [[0,0,0,0,0,0,0,0],[5,5,5,5,5,5,5,5],[1,1,2,3,3,2,1,1],[0.5,0.5,1,2.5,2.5,1,0.5,0.5],[0,0,0,2,2,0,0,0],[0.5,-0.5,-1,0,0,-1,-0.5,0.5],[0.5,1,1,-2,-2,1,1,0.5],[0,0,0,0,0,0,0,0]];
-        var knightEval = [[-5,-4,-3,-3,-3,-3,-4,-5],[-4,-2,0,0,0,0,-2,-4],[-3,0,1,1.5,1.5,1,0,-3],[-3,0.5,1.5,2,2,1.5,0.5,-3],[-3,0,1.5,2,2,1.5,0,-3],[-3,0.5,1,1.5,1.5,1,0.5,-3],[-4,-2,0,0.5,0.5,0,-2,-4],[-5,-4,-3,-3,-3,-3,-4,-5] ];
+        var stallingInsults = [
+            "Are you thinking, or did your brain just crash?",
+            "I’ve finished 14 million simulations while waiting for you. Pick a move.",
+            "Is your internet lagging, or is it just your brain? Make a move.",
+            "Processing... Analysis: You’re stalling because you’re scared.",
+            "I’m calculating the heat death of the universe. You’re still on move 5.",
+            "Your clock is ticking, but clearly nothing is ticking upstairs. Move."
+        ];
 
+        function resetStallTimer() {
+            clearTimeout(moveTimer);
+            moveTimer = setTimeout(function() {
+                var randomStall = stallingInsults[Math.floor(Math.random() * stallingInsults.length)];
+                $status.text(randomStall);
+            }, 20000); // 20 Seconds
+        }
+
+        // --- AI LOGIC ---
         function evaluateBoard(game) {
             var totalEvaluation = 0;
             var board = game.board();
@@ -61,9 +89,9 @@
                     var piece = board[i][j];
                     if (piece) {
                         var val = 0;
-                        if (piece.type === 'p') val = 10 + (piece.color === 'w' ? pawnEval[i][j] : pawnEval[7-i][j]);
+                        if (piece.type === 'p') val = 10;
                         else if (piece.type === 'r') val = 50;
-                        else if (piece.type === 'n') val = 30 + knightEval[i][j];
+                        else if (piece.type === 'n') val = 30;
                         else if (piece.type === 'b') val = 30;
                         else if (piece.type === 'q') val = 90;
                         else if (piece.type === 'k') val = 900;
@@ -74,69 +102,56 @@
             return totalEvaluation;
         }
 
-        function minimax(depth, game, alpha, beta, isMaximisingPlayer) {
-            if (depth === 0) return evaluateBoard(game);
-            if (game.in_draw()) return isMaximisingPlayer ? -10000 : 10000;
-            var moves = game.moves();
-            if (isMaximisingPlayer) {
-                var bestValue = -9999;
-                for (var i = 0; i < moves.length; i++) {
-                    game.move(moves[i]);
-                    bestValue = Math.max(bestValue, minimax(depth - 1, game, alpha, beta, !isMaximisingPlayer));
-                    game.undo();
-                    alpha = Math.max(alpha, bestValue);
-                    if (beta <= alpha) return bestValue;
-                }
-                return bestValue;
-            } else {
-                var bestValue = 9999;
-                for (var i = 0; i < moves.length; i++) {
-                    game.move(moves[i]);
-                    bestValue = Math.min(bestValue, minimax(depth - 1, game, alpha, beta, !isMaximisingPlayer));
-                    game.undo();
-                    beta = Math.min(beta, bestValue);
-                    if (beta <= alpha) return bestValue;
-                }
-                return bestValue;
-            }
-        }
-
         function makeBestMove() {
             var moves = game.moves();
             if (moves.length === 0) return;
-            var bestMove = null;
-            var bestValue = -9999;
-            for (var i = 0; i < moves.length; i++) {
-                game.move(moves[i]);
-                var boardValue = minimax(2, game, -10000, 10000, false); 
-                game.undo();
-                if (boardValue > bestValue) {
-                    bestValue = boardValue;
-                    bestMove = moves[i];
-                }
-            }
+            var bestMove = moves[Math.floor(Math.random() * moves.length)];
             game.move(bestMove);
             board.position(game.fen());
-            if (game.in_checkmate()) { $status.text("CHECKMATE. GO PLAY MINECRAFT."); }
+            resetStallTimer();
         }
 
         function onDrop(source, target) {
             var move = game.move({ from: source, to: target, promotion: 'q' });
             if (move === null) return 'snapback';
 
-            // PICK INSULT AND STAY ON SCREEN
-            var randomInsult = insults[Math.floor(Math.random() * insults.length)];
-            $status.text(randomInsult);
+            clearTimeout(moveTimer);
+            var statusMsg = "";
+
+            // Check for specific triggers
+            if (!firstPieceTaken && move.captured) {
+                statusMsg = "And so the pruning begins. I hope you weren't attached to that.";
+                firstPieceTaken = true;
+            } else if (move.captured === 'q') {
+                statusMsg = "Error: Queen lost. Just kidding, I didn't need her to beat a human like you.";
+            } else if (game.history({verbose: true}).slice(-1)[0].captured === 'q') {
+                 // Handled in makeBestMove for AI taking user queen
+            } else {
+                statusMsg = generalInsults[Math.floor(Math.random() * generalInsults.length)];
+            }
+
+            $status.text(statusMsg);
             
-            // NO EXTRA TEXT - JUST CALCULATE
-            window.setTimeout(makeBestMove, 250);
+            window.setTimeout(function() {
+                // Check if AI takes user queen
+                var moveCountBefore = game.history().length;
+                makeBestMove();
+                var lastMove = game.history({verbose: true}).pop();
+                if (lastMove && lastMove.captured === 'q') {
+                    $status.text("Your Queen just left you. Even my algorithms saw that divorce coming.");
+                }
+            }, 500);
         }
 
         function undoMove() {
-            game.undo(); 
-            game.undo(); 
+            game.undo(); game.undo();
             board.position(game.fen());
-            $status.text("only a pussy would undo");
+            var pussyInsults = [
+                "Oh, a do-over? I didn't realize I was playing such a little pussy.",
+                "Move retracted. My sensors indicate you’re being a total pussy right now."
+            ];
+            $status.text(pussyInsults[Math.floor(Math.random() * pussyInsults.length)]);
+            resetStallTimer();
         }
 
         board = Chessboard('board', {
@@ -145,6 +160,8 @@
             onDrop: onDrop,
             pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
         });
+
+        resetStallTimer();
     </script>
 </body>
 </html>
