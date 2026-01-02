@@ -6,7 +6,7 @@
     <title>CYBER-BULLY CHESS</title>
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Share+Tech+Mono&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap');
 
         body { 
             background: #000; 
@@ -15,78 +15,78 @@
             flex-direction: column; 
             align-items: center; 
             font-family: 'Share Tech Mono', monospace; 
-            padding: 20px;
-            overflow-x: hidden;
+            padding: 10px;
+            margin: 0;
+            height: 100vh;
+            overflow: hidden; /* Prevents scrolling */
+            justify-content: center;
         }
 
-        /* HEADER ANIMATION */
+        /* COMPACT HEADER */
         .header { 
             font-family: 'Orbitron', sans-serif;
-            font-size: 3.5rem; 
-            letter-spacing: 10px; 
+            font-size: 2rem; 
+            letter-spacing: 8px; 
             color: #f00; 
-            text-shadow: 0 0 10px #f00, 0 0 20px #f00;
-            margin-bottom: 20px;
+            text-shadow: 0 0 10px #f00;
+            margin-bottom: 5px;
             animation: glitch 1s infinite;
         }
 
         @keyframes glitch {
             0% { opacity: 1; transform: skew(0deg); }
-            20% { opacity: 0.8; transform: skew(-2deg); }
-            21% { opacity: 1; transform: skew(0deg); }
-            80% { opacity: 1; transform: skew(2deg); }
-            81% { opacity: 0.9; transform: skew(0deg); }
+            20% { opacity: 0.8; transform: skew(-1deg); }
+            80% { opacity: 1; transform: skew(1deg); }
         }
 
-        /* THE BOARD */
-        #board { 
-            width: 550px; 
-            max-width: 95vw; 
-            border: 5px solid #0f0; 
-            box-shadow: 0 0 40px #0f0; 
-        }
-
-        /* THE MASSIVE TEXT BOX */
+        /* WIDER INFO PANEL */
         .info-panel { 
             background: rgba(15, 15, 15, 0.9); 
-            padding: 40px; 
-            margin-bottom: 30px; 
+            padding: 15px 30px; 
+            margin-bottom: 15px; 
             text-align: center; 
-            width: 900px; 
-            max-width: 98vw; 
-            border-bottom: 4px solid #f00;
+            width: 95vw; /* Fills the width */
+            max-width: 1000px; 
+            border: 1px solid #0f0;
+            box-sizing: border-box;
         }
 
-        /* THE INSULT FONT - DOUBLED SIZE */
+        /* ADJUSTED FONT SIZE (1.5x Original) */
         #status { 
             font-family: 'Orbitron', sans-serif;
-            font-weight: 900; 
+            font-weight: 700; 
             color: #0f0; 
-            font-size: 3.2rem; /* MASSIVE SIZE */
-            line-height: 1.1;
-            min-height: 4em; 
+            font-size: 1.6rem; 
+            line-height: 1.2;
+            min-height: 2.5em; 
             display: flex; 
             align-items: center; 
             justify-content: center; 
             text-transform: uppercase; 
-            text-shadow: 2px 2px 0px #300;
-            word-wrap: break-word;
+            text-shadow: 1px 1px 0px #000;
         }
 
-        .controls { margin-top: 30px; }
+        /* BOARD - SLIGHTLY SMALLER TO FIT SCREEN */
+        #board { 
+            width: 420px; 
+            max-width: 80vw; 
+            border: 3px solid #0f0; 
+            box-shadow: 0 0 20px #0f0; 
+        }
+
+        .controls { margin-top: 15px; }
         button { 
             background: #f00; 
             color: #000; 
             border: none; 
-            padding: 20px 40px; 
+            padding: 10px 25px; 
             cursor: pointer; 
             font-family: 'Orbitron', sans-serif; 
             font-weight: bold; 
             text-transform: uppercase; 
-            font-size: 1.5rem;
-            box-shadow: 0 0 15px #f00;
+            font-size: 1rem;
         }
-        button:hover { background: #0f0; color: #000; box-shadow: 0 0 25px #0f0; }
+        button:hover { background: #0f0; }
     </style>
 </head>
 <body>
@@ -154,6 +154,7 @@
             }, 10000);
         }
 
+        // --- AI BRAIN ---
         function evaluateBoard(game) {
             var totalEvaluation = 0;
             var board = game.board();
