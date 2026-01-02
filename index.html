@@ -88,7 +88,7 @@
 
             for (var i = 0; i < possibleMoves.length; i++) {
                 game.move(possibleMoves[i]);
-                var boardValue = minimax(2, game, false); // "2" means looking ahead
+                var boardValue = minimax(4, game, false); // "2" means looking ahead
                 game.undo();
                 if (boardValue > bestValue) {
                     bestValue = boardValue;
