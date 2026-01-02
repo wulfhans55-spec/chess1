@@ -35,7 +35,7 @@
             text-transform: uppercase; text-shadow: 1px 1px 0px #000;
         }
 
-        #board { width: 420px; max-width: 80vw; border: 3px solid #0f0; box-shadow: 0 0 20px #0f0; }
+        #board { width: 400px; max-width: 80vw; border: 3px solid #0f0; box-shadow: 0 0 20px #0f0; }
 
         .controls { margin-top: 15px; }
         button { 
@@ -49,7 +49,7 @@
 
     <div class="info-panel">
         <div class="header"><b>[ CYBER-BULLY ]</b></div>
-        <div id="status">CONNECTION ESTABLISHED. PREPARE TO LOSE.</div>
+        <div id="status">CONNECTION ESTABLISHED. TRY TO LAST 10 MOVES.</div>
     </div>
 
     <div id="board"></div>
@@ -110,42 +110,39 @@
             }, 10000);
         }
 
-        // --- ENHANCED AI ENGINE LEVEL 3.5 ---
-        // Square-table evaluations make the AI control the center
+        // --- LEVEL 3 AI BRAIN (DEPTH 2) ---
         var weights = { p: 10, n: 30, b: 30, r: 50, q: 90, k: 900 };
-        var pst_w = {
+        var pst = {
             p: [ [0,0,0,0,0,0,0,0],[5,5,5,5,5,5,5,5],[1,1,2,3,3,2,1,1],[0.5,0.5,1,2.5,2.5,1,0.5,0.5],[0,0,0,2,2,0,0,0],[0.5,-0.5,-1,0,0,-1,-0.5,0.5],[0.5,1,1,-2,-2,1,1,0.5],[0,0,0,0,0,0,0,0] ],
             n: [ [-5,-4,-3,-3,-3,-3,-4,-5],[-4,-2,0,0,0,0,-2,-4],[-3,0,1,1.5,1.5,1,0,-3],[-3,0.5,1.5,2,2,1.5,0.5,-3],[-3,0,1.5,2,2,1.5,0,-3],[-3,0.5,1,1.5,1.5,1,0.5,-3],[-4,-2,0,0.5,0.5,0,-2,-4],[-5,-4,-3,-3,-3,-3,-4,-5] ]
         };
 
         function evaluateBoard(game) {
-            var totalEvaluation = 0;
+            var total = 0;
             var board = game.board();
             for (var i = 0; i < 8; i++) {
                 for (var j = 0; j < 8; j++) {
                     var piece = board[i][j];
                     if (piece) {
                         var val = weights[piece.type];
-                        if (piece.type === 'p' || piece.type === 'n') {
-                            val += (piece.color === 'w' ? pst_w[piece.type][i][j] : pst_w[piece.type][7-i][j]);
-                        }
-                        totalEvaluation += (piece.color === 'w' ? -val : val);
+                        if (pst[piece.type]) val += (piece.color === 'w' ? pst[piece.type][i][j] : pst[piece.type][7-i][j]);
+                        total += (piece.color === 'w' ? -val : val);
                     }
                 }
             }
-            return totalEvaluation;
+            return total;
         }
 
-        function minimax(depth, game, alpha, beta, isMaximizing) {
+        function minimax(depth, game, alpha, beta, isMax) {
             if (depth === 0) return evaluateBoard(game);
             var moves = game.moves();
-            if (game.in_draw()) return isMaximizing ? -10000 : 10000;
+            if (game.in_draw()) return isMax ? -10000 : 10000;
             
-            if (isMaximizing) {
+            if (isMax) {
                 var best = -10000;
                 for (var i = 0; i < moves.length; i++) {
                     game.move(moves[i]);
-                    best = Math.max(best, minimax(depth - 1, game, alpha, beta, !isMaximizing));
+                    best = Math.max(best, minimax(depth - 1, game, alpha, beta, !isMax));
                     game.undo();
                     alpha = Math.max(alpha, best);
                     if (beta <= alpha) break;
@@ -155,7 +152,7 @@
                 var best = 10000;
                 for (var i = 0; i < moves.length; i++) {
                     game.move(moves[i]);
-                    best = Math.min(best, minimax(depth - 1, game, alpha, beta, !isMaximizing));
+                    best = Math.min(best, minimax(depth - 1, game, alpha, beta, !isMax));
                     game.undo();
                     beta = Math.min(beta, best);
                     if (beta <= alpha) break;
@@ -167,24 +164,19 @@
         function makeBestMove() {
             var moves = game.moves();
             if (moves.length === 0) return;
-            
             var bestMove = null;
             var bestValue = -10000;
-
             for (var i = 0; i < moves.length; i++) {
                 game.move(moves[i]);
-                // Depth 3 search for Level 3.5 strength
-                var boardValue = minimax(3, game, -10000, 10000, false);
+                var boardValue = minimax(2, game, -10000, 10000, false);
                 game.undo();
                 if (boardValue > bestValue) {
                     bestValue = boardValue;
                     bestMove = moves[i];
                 }
             }
-
             var moveObj = game.move(bestMove);
             board.position(game.fen());
-
             if (moveObj.captured === 'q') $status.text("YOUR QUEEN LEFT YOU. DIVORCE COMING.");
             if (!playerLostFirstPiece && moveObj.captured) {
                 $status.text("PRUNING BEGINS. DON'T BE ATTACHED.");
@@ -197,7 +189,6 @@
             var move = game.move({ from: source, to: target, promotion: 'q' });
             if (move === null) return 'snapback';
             clearTimeout(moveTimer);
-            
             if (move.captured === 'q') {
                 $status.text("QUEEN LOST. DIDN'T NEED HER TO BEAT A HUMAN.");
             } else {
@@ -209,7 +200,8 @@
         function undoMove() {
             game.undo(); game.undo();
             board.position(game.fen());
-            $status.text("ONLY A PUSSY WOULD UNDO.");
+            var undoLines = ["OH, A DO-OVER? I DIDN'T REALIZE I WAS PLAYING SUCH A LITTLE PUSSY.", "MOVE RETRACTED. MY SENSORS INDICATE YOU’RE BEING A TOTAL PUSSY RIGHT NOW."];
+            $status.text(undoLines[Math.floor(Math.random()*undoLines.length)]);
             resetStallTimer();
         }
 
