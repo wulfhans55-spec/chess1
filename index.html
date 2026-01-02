@@ -13,72 +13,65 @@
             font-family: 'Share Tech Mono', monospace; margin: 0; height: 100vh; overflow: hidden; justify-content: center; 
         }
 
-        /* NEON UI */
+        .header { 
+            font-family: 'Orbitron', sans-serif; font-size: 2.2rem; letter-spacing: 8px; color: #f00; 
+            text-shadow: 0 0 10px #f00; margin-bottom: 5px; animation: glitch 1s infinite;
+        }
+
+        @keyframes glitch {
+            0% { opacity: 1; transform: skew(0deg); }
+            20% { opacity: 0.8; transform: skew(-1deg); }
+            80% { opacity: 1; transform: skew(1deg); }
+        }
+
         .info-panel { 
-            background: rgba(10, 10, 10, 0.9); padding: 10px; margin-bottom: 10px; 
-            text-align: center; width: 95vw; max-width: 1000px; border: 2px solid #0f0; 
-            box-shadow: 0 0 15px #0f0; 
+            background: rgba(10, 10, 10, 0.9); padding: 15px; margin-bottom: 15px; 
+            text-align: center; width: 95vw; max-width: 1100px; border: 2px solid #0f0; 
         }
         
         #status { 
-            font-family: 'Orbitron', sans-serif; font-weight: 700; color: #0f0; font-size: 1.4rem; 
+            font-family: 'Orbitron', sans-serif; font-weight: 900; color: #0f0; font-size: 1.8rem; 
             min-height: 2.5em; display: flex; align-items: center; justify-content: center; text-transform: uppercase; 
         }
 
-        /* THE GLOWING BOARD */
         .game-container { display: flex; align-items: center; gap: 20px; }
         
-        #board { 
-            width: 400px; border: 4px solid #0f0; 
-            box-shadow: 0 0 30px rgba(0, 255, 0, 0.3); 
-        }
+        #board { width: 400px; border: 4px solid #0f0; box-shadow: 0 0 20px #0f0; }
 
-        /* PIECE STYLING - Makes them look neon */
-        .piece-417db {
-            filter: drop-shadow(0 0 2px #fff) brightness(1.2);
-        }
-        
         /* Neon Squares */
         .white-1e1d7 { background-color: #0a200a !important; box-shadow: inset 0 0 15px #0f0; } 
         .black-3c85d { background-color: #200a0a !important; box-shadow: inset 0 0 15px #f00; } 
         
-        /* GRAVEYARDS */
+        /* Graveyards */
         .graveyard { 
-            width: 75px; height: 400px; background: #050505; border: 1px solid #0f0; 
+            width: 80px; height: 400px; background: #050505; border: 1px solid #0f0; 
             padding: 5px; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 2px;
-            box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
         }
         .graveyard img { width: 32px; height: 32px; filter: drop-shadow(0 0 2px #0f0); }
-        .graveyard-label { width: 100%; font-size: 0.7rem; color: #f00; text-align: center; margin-bottom: 10px; font-weight: bold; }
+        .graveyard-label { width: 100%; font-size: 0.7rem; color: #f00; text-align: center; margin-bottom: 5px; font-weight: bold; }
 
         .controls { margin-top: 15px; }
         button { 
             background: #f00; color: #000; border: none; padding: 10px 25px; cursor: pointer; 
-            font-family: 'Orbitron', sans-serif; font-weight: bold; box-shadow: 0 0 10px #f00;
+            font-family: 'Orbitron', sans-serif; font-weight: bold; text-transform: uppercase;
         }
-        button:hover { background: #0f0; box-shadow: 0 0 15px #0f0; }
     </style>
 </head>
 <body>
 
     <div class="info-panel">
+        <div class="header"><b>[ CYBER-BULLY ]</b></div>
         <div id="status">CONNECTION ESTABLISHED. LEVEL 4 READY.</div>
     </div>
 
     <div class="game-container">
-        <div class="graveyard" id="player-kills">
-            <div class="graveyard-label">AI DELETED</div>
-        </div>
-        
+        <div class="graveyard" id="player-kills"><div class="graveyard-label">AI LOSSES</div></div>
         <div id="board"></div>
-
-        <div class="graveyard" id="ai-kills">
-            <div class="graveyard-label">USER DELETED</div>
-        </div>
+        <div class="graveyard" id="ai-kills"><div class="graveyard-label">YOUR LOSSES</div></div>
     </div>
 
     <div class="controls">
-        <button onclick="undoMove()">UNDO (PATHETIC)</button>
+        <button onclick="undoMove()">UNDO (COWARD)</button>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
@@ -89,8 +82,8 @@
         var board = null;
         var game = new Chess();
         var $status = $('#status');
-        
-        // Use the most stable piece set URL
+        var playerLostFirstPiece = false;
+        var moveTimer = null;
         var pieceBaseUrl = 'https://chessboardjs.com/img/chesspieces/wikipedia/';
 
         const generalInsults = [
@@ -104,16 +97,15 @@
             "I’VE SEEN BETTER LOGIC FROM A TOASTER."
         ];
 
-        // --- LEVEL 4 AI ENGINE ---
-        const weights = { p: 10, n: 32, b: 33, r: 50, q: 90, k: 900 };
+        function resetStallTimer() {
+            clearTimeout(moveTimer);
+            moveTimer = setTimeout(() => { $status.text("DID YOUR BRAIN JUST CRASH? MOVE."); }, 10000);
+        }
 
         function evaluateBoard(game) {
             var total = 0;
-            game.board().forEach(row => {
-                row.forEach(p => {
-                    if (p) total += (p.color === 'w' ? -weights[p.type] : weights[p.type]);
-                });
-            });
+            const weights = { p: 10, n: 32, b: 33, r: 50, q: 90, k: 900 };
+            game.board().forEach(row => { row.forEach(p => { if (p) total += (p.color === 'w' ? -weights[p.type] : weights[p.type]); }); });
             return total;
         }
 
@@ -121,19 +113,13 @@
             if (depth === 0) return evaluateBoard(game);
             var moves = game.moves();
             if (moves.length === 0) return isMax ? -9999 : 9999;
-            
             var best = isMax ? -10000 : 10000;
             for (var move of moves) {
                 game.move(move);
                 var val = minimax(depth - 1, game, alpha, beta, !isMax);
                 game.undo();
-                if (isMax) {
-                    best = Math.max(best, val);
-                    alpha = Math.max(alpha, best);
-                } else {
-                    best = Math.min(best, val);
-                    beta = Math.min(beta, best);
-                }
+                if (isMax) { best = Math.max(best, val); alpha = Math.max(alpha, best); }
+                else { best = Math.min(best, val); beta = Math.min(beta, best); }
                 if (beta <= alpha) break;
             }
             return best;
@@ -141,13 +127,11 @@
 
         function updateGraveyard() {
             $('#player-kills, #ai-kills').find('img').remove();
-            let history = game.history({verbose: true});
-            history.forEach(m => {
+            game.history({verbose: true}).forEach(m => {
                 if (m.captured) {
                     let container = (m.color === 'w') ? '#player-kills' : '#ai-kills';
                     let capColor = (m.color === 'w') ? 'b' : 'w';
-                    let pImg = capColor + m.captured.toUpperCase() + '.png';
-                    $(container).append(`<img src="${pieceBaseUrl}${pImg}">`);
+                    $(container).append(`<img src="${pieceBaseUrl}${capColor}${m.captured.toUpperCase()}.png">`);
                 }
             });
         }
@@ -155,41 +139,34 @@
         function makeBestMove() {
             var moves = game.moves();
             var bestMove = null;
-            var bestValue = -10000;
-
+            var bestValue = -Infinity;
             for (var move of moves) {
                 game.move(move);
                 var val = minimax(3, game, -10000, 10000, false);
                 game.undo();
-                if (val > bestValue) {
-                    bestValue = val;
-                    bestMove = move;
-                }
+                if (val > bestValue) { bestValue = val; bestMove = move; }
             }
-            
             let mObj = game.move(bestMove);
             board.position(game.fen());
             updateGraveyard();
-
+            
             if (mObj.captured === 'q') {
                 $status.text("Your Queen just left you. Even my algorithms saw that divorce coming.");
+            } else if (!playerLostFirstPiece && mObj.captured) {
+                $status.text("PRUNING BEGINS. DON'T BE ATTACHED.");
+                playerLostFirstPiece = true;
             } else {
                 $status.text(generalInsults[Math.floor(Math.random() * generalInsults.length)]);
             }
+            resetStallTimer();
         }
 
         function onDrop(src, tgt) {
             var move = game.move({ from: src, to: tgt, promotion: 'q' });
             if (!move) return 'snapback';
-            
+            clearTimeout(moveTimer);
             updateGraveyard();
-            
-            if (move.captured === 'q') {
-                $status.text("Error: Queen lost. Just kidding, I didn't need her to beat a human like you.");
-            } else {
-                $status.text("PROCESSING...");
-            }
-            
+            $status.text("PROCESSING..."); // Bot thinking instruction
             window.setTimeout(makeBestMove, 250);
         }
 
@@ -201,11 +178,10 @@
         }
 
         board = Chessboard('board', {
-            draggable: true,
-            position: 'start',
-            onDrop: onDrop,
+            draggable: true, position: 'start', onDrop: onDrop,
             pieceTheme: pieceBaseUrl + '{piece}.png'
         });
+        resetStallTimer();
     </script>
 </body>
 </html>
