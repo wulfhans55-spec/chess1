@@ -4,29 +4,80 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CYBER-BULLY CHESS</title>
+    
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap');
+        
+        body { 
+            background: #000; color: #0f0; display: flex; flex-direction: column; align-items: center; 
+            font-family: 'Share Tech Mono', monospace; margin: 0; height: 100vh; overflow: hidden; justify-content: center; 
+        }
+
+        .header { 
+            font-family: 'Orbitron', sans-serif; font-size: 2.2rem; letter-spacing: 8px; color: #f00; 
+            text-shadow: 0 0 10px #f00; margin-bottom: 5px; animation: glitch 1s infinite;
+        }
+
+        @keyframes glitch {
+            0% { opacity: 1; transform: skew(0deg); }
+            20% { opacity: 0.8; transform: skew(-1deg); }
+            80% { opacity: 1; transform: skew(1deg); }
+        }
+
+        .info-panel { 
+            background: rgba(10, 10, 10, 0.9); padding: 15px; margin-bottom: 10px; 
+            text-align: center; width: 95vw; max-width: 1150px; border: 2px solid #0f0; 
+            box-shadow: 0 0 15px #0f0;
+        }
+        
+        #status { 
+            font-family: 'Orbitron', sans-serif; font-weight: 900; color: #0f0; font-size: 1.8rem; 
+            min-height: 2.8em; display: flex; align-items: center; justify-content: center; 
+            text-transform: uppercase; text-shadow: 2px 2px 0px #000;
+        }
+
+        .game-container { display: flex; align-items: center; gap: 25px; }
+        #board { width: 420px; border: 4px solid #0f0; box-shadow: 0 0 25px #0f0; }
+
+        .white-1e1d7 { background-color: #0a200a !important; box-shadow: inset 0 0 15px #0f0; } 
+        .black-3c85d { background-color: #200a0a !important; box-shadow: inset 0 0 15px #f00; } 
+        
+        .graveyard { 
+            width: 85px; height: 420px; background: #050505; border: 1px solid #0f0; 
+            padding: 8px; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 4px;
+        }
+        .graveyard img { width: 35px; height: 35px; filter: drop-shadow(0 0 2px #0f0); }
+        .graveyard-label { width: 100%; font-size: 0.75rem; color: #f00; text-align: center; margin-bottom: 8px; font-weight: bold; }
+
+        .controls { margin-top: 15px; }
+        button { 
+            background: #f00; color: #000; border: none; padding: 12px 35px; cursor: pointer; 
+            font-family: 'Orbitron', sans-serif; font-weight: bold; text-transform: uppercase;
+        }
+    </style>
 </head>
 <body>
 
-    <div id="game-wrapper">
-        <div class="info-panel">
-            <div class="header"><b>[ CYBER-BULLY ]</b></div>
-            <div id="status">Connection established. Try to make this interesting, or at least try to last more than ten moves.</div>
-        </div>
-
-        <div class="game-container">
-            <div class="graveyard" id="player-kills"><div class="label">AI LOSSES</div></div>
-            <div id="board"></div>
-            <div class="graveyard" id="ai-kills"><div class="label">YOUR LOSSES</div></div>
-        </div>
-
-        <div class="controls">
-            <button onclick="undoMove()">UNDO (COWARD)</button>
-        </div>
+    <div class="info-panel">
+        <div class="header"><b>[ CYBER-BULLY ]</b></div>
+        <div id="status">Connection established. Try to make this interesting, or at least try to last more than ten moves.</div>
     </div>
+
+    <div class="game-container">
+        <div class="graveyard" id="player-kills"><div class="graveyard-label">AI LOSSES</div></div>
+        <div id="board"></div>
+        <div class="graveyard" id="ai-kills"><div class="graveyard-label">YOUR LOSSES</div></div>
+    </div>
+
+    <div class="controls">
+        <button onclick="undoMove()">UNDO (COWARD)</button>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
 
     <script>
         var board = null;
@@ -36,7 +87,6 @@
         var playerLostFirstPiece = false;
         var pieceBaseUrl = 'https://chessboardjs.com/img/chesspieces/wikipedia/';
 
-        // THE INSULT DATABASE (Part 1)
         const insults = {
             firstLoss: "I hope you weren't attached to that.",
             queenLoss: "Your Queen just left you. Even my algorithms saw that divorce coming.",
@@ -74,18 +124,43 @@
             ]
         };
 
-        // CORE TIMER LOGIC
-        function resetStallTimer() {
-            clearTimeout(moveTimer);
-            if (game.history().length > 0) {
-                moveTimer = setTimeout(function() {
-                    var msg = insults.stalling[Math.floor(Math.random() * insults.stalling.length)];
-                    $status.text(msg);
-                }, 10000);
-            }
+        const weights = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
+
+        function evaluateBoard(game) {
+            let total = 0;
+            game.board().forEach((row, i) => {
+                row.forEach((piece, j) => {
+                    if (piece) {
+                        let val = weights[piece.type];
+                        if (i >= 3 && i <= 4 && j >= 3 && j <= 4) val += 15;
+                        total += (piece.color === 'w' ? -val : val);
+                    }
+                });
+            });
+            return total;
         }
 
-        // CORE PIECE TRACKING
+        function minimax(depth, game, alpha, beta, isMax) {
+            if (depth === 0) return evaluateBoard(game);
+            let moves = game.moves().sort((a, b) => b.includes('x') - a.includes('x'));
+            if (moves.length === 0) return isMax ? -99999 : 99999;
+            let bestScore = isMax ? -Infinity : Infinity;
+            for (let move of moves) {
+                game.move(move);
+                let score = minimax(depth - 1, game, alpha, beta, !isMax);
+                game.undo();
+                if (isMax) {
+                    bestScore = Math.max(bestScore, score);
+                    alpha = Math.max(alpha, bestScore);
+                } else {
+                    bestScore = Math.min(bestScore, score);
+                    beta = Math.min(beta, bestScore);
+                }
+                if (beta <= alpha) break;
+            }
+            return bestScore;
+        }
+
         function updateGraveyard() {
             $('#player-kills, #ai-kills').find('img').remove();
             game.history({verbose: true}).forEach(m => {
@@ -97,218 +172,59 @@
             });
         }
 
-        // To be continued in Parts 2, 3, and 4...
-    </script>
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap');
-    
-    body { 
-        background: #000; color: #0f0; display: flex; flex-direction: column; align-items: center; 
-        font-family: 'Share Tech Mono', monospace; margin: 0; height: 100vh; overflow: hidden; justify-content: center; 
-    }
+        function makeBestMove() {
+            let moves = game.moves();
+            let bestMove = null;
+            let bestValue = -Infinity;
+            for (let move of moves) {
+                game.move(move);
+                let val = minimax(2, game, -Infinity, Infinity, false);
+                game.undo();
+                if (val > bestValue) { bestValue = val; bestMove = move; }
+            }
+            let moveObj = game.move(bestMove);
+            board.position(game.fen());
+            updateGraveyard();
+            $status.text(getBotInsult(moveObj));
+            resetStallTimer();
+        }
 
-    /* MASSIVE GLITCH HEADER */
-    .header { 
-        font-family: 'Orbitron', sans-serif; font-size: 2.2rem; letter-spacing: 8px; color: #f00; 
-        text-shadow: 0 0 10px #f00; margin-bottom: 5px; animation: glitch 1s infinite;
-    }
+        function getBotInsult(move) {
+            if (move.captured === 'q') return insults.queenLoss;
+            if (!playerLostFirstPiece && move.captured) { playerLostFirstPiece = true; return insults.firstLoss; }
+            return insults.general[Math.floor(Math.random() * insults.general.length)];
+        }
 
-    @keyframes glitch {
-        0% { opacity: 1; transform: skew(0deg); }
-        20% { opacity: 0.8; transform: skew(-1deg); }
-        80% { opacity: 1; transform: skew(1deg); }
-    }
+        function onDrop(src, tgt) {
+            let move = game.move({ from: src, to: tgt, promotion: 'q' });
+            if (!move) return 'snapback';
+            clearTimeout(moveTimer);
+            updateGraveyard();
+            window.setTimeout(makeBestMove, 250);
+        }
 
-    /* WIDE INFO PANEL & MASSIVE STATUS FONT */
-    .info-panel { 
-        background: rgba(10, 10, 10, 0.9); padding: 15px; margin-bottom: 10px; 
-        text-align: center; width: 95vw; max-width: 1150px; border: 2px solid #0f0; 
-        box-shadow: 0 0 15px #0f0;
-    }
-    
-    #status { 
-        font-family: 'Orbitron', sans-serif; font-weight: 900; color: #0f0; 
-        font-size: 1.8rem; /* 1.5x - 1.8x enlargement */
-        min-height: 2.8em; display: flex; align-items: center; justify-content: center; 
-        text-transform: uppercase; text-shadow: 2px 2px 0px #000;
-    }
-
-    /* THE GLOWING BOARD & GRAVEYARD CONTAINER */
-    .game-container { display: flex; align-items: center; gap: 25px; }
-    
-    #board { width: 420px; border: 4px solid #0f0; box-shadow: 0 0 25px #0f0; }
-
-    /* NEON SQUARE OVERRIDES */
-    .white-1e1d7 { background-color: #0a200a !important; box-shadow: inset 0 0 15px #0f0; } 
-    .black-3c85d { background-color: #200a0a !important; box-shadow: inset 0 0 15px #f00; } 
-
-    /* PIECE GLOW EFFECT */
-    .piece-417db { filter: drop-shadow(0 0 2px #fff) brightness(1.1); }
-    
-    /* GRAVEYARDS */
-    .graveyard { 
-        width: 85px; height: 420px; background: #050505; border: 1px solid #0f0; 
-        padding: 8px; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 4px;
-        box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
-    }
-    .graveyard img { width: 35px; height: 35px; filter: drop-shadow(0 0 2px #0f0); }
-    .graveyard-label { width: 100%; font-size: 0.75rem; color: #f00; text-align: center; margin-bottom: 8px; font-weight: bold; letter-spacing: 1px; }
-
-    /* CONTROLS */
-    .controls { margin-top: 15px; }
-    button { 
-        background: #f00; color: #000; border: none; padding: 12px 35px; cursor: pointer; 
-        font-family: 'Orbitron', sans-serif; font-weight: bold; text-transform: uppercase;
-        box-shadow: 0 0 10px #f00; transition: 0.2s;
-    }
-    button:hover { background: #0f0; box-shadow: 0 0 20px #0f0; transform: scale(1.05); }
-</style>
-    // --- PART 3: LEVEL 4 AI CORE ---
-
-// Advanced Piece Weighting for Level 4 Strategic Play
-const weights = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
-
-// Positional bonuses: Bot prefers to control the center (e.g., d4, e4, d5, e5)
-function evaluateBoard(game) {
-    let total = 0;
-    const board = game.board();
-    for (let i = 0; i < 8; i++) {
-        for (let j = 0; j < 8; j++) {
-            const piece = board[i][j];
-            if (piece) {
-                let val = weights[piece.type];
-                // Center control bonus
-                if (i >= 3 && i <= 4 && j >= 3 && j <= 4) val += 15;
-                total += (piece.color === 'w' ? -val : val);
+        function resetStallTimer() {
+            clearTimeout(moveTimer);
+            if (game.history().length > 0) {
+                moveTimer = setTimeout(() => {
+                    $status.text(insults.stalling[Math.floor(Math.random() * insults.stalling.length)]);
+                }, 10000);
             }
         }
-    }
-    return total;
-}
 
-// Quiescence Search: Prevents the "Horizon Effect" 
-// (Stops the AI from making dumb moves by calculating captures until the board is quiet)
-function quiescence(game, alpha, beta, isMax) {
-    let stand_pat = evaluateBoard(game);
-    if (isMax) {
-        if (stand_pat >= beta) return beta;
-        if (alpha < stand_pat) alpha = stand_pat;
-    } else {
-        if (stand_pat <= alpha) return alpha;
-        if (beta > stand_pat) beta = stand_pat;
-    }
-
-    let moves = game.moves().filter(m => m.includes('x')); // Only check captures
-    for (let move of moves) {
-        game.move(move);
-        let score = quiescence(game, alpha, beta, !isMax);
-        game.undo();
-        if (isMax) {
-            if (score >= beta) return beta;
-            if (score > alpha) alpha = score;
-        } else {
-            if (score <= alpha) return alpha;
-            if (score < beta) beta = score;
+        function undoMove() {
+            game.undo(); game.undo();
+            board.position(game.fen());
+            updateGraveyard();
+            $status.text(insults.undo[Math.floor(Math.random() * insults.undo.length)]);
+            resetStallTimer();
         }
-    }
-    return isMax ? alpha : beta;
-}
 
-// Minimax with Alpha-Beta Pruning
-function minimax(depth, game, alpha, beta, isMax) {
-    if (depth === 0) return quiescence(game, alpha, beta, isMax);
-    
-    // Sort moves: Check captures first to speed up the "pruning" process
-    let moves = game.moves().sort((a, b) => b.includes('x') - a.includes('x'));
-    
-    if (moves.length === 0) {
-        if (game.in_check()) return isMax ? -99999 : 99999;
-        return 0; // Draw
-    }
-
-    let bestScore = isMax ? -Infinity : Infinity;
-    for (let move of moves) {
-        game.move(move);
-        let score = minimax(depth - 1, game, alpha, beta, !isMax);
-        game.undo();
-        
-        if (isMax) {
-            bestScore = Math.max(bestScore, score);
-            alpha = Math.max(alpha, bestScore);
-        } else {
-            bestScore = Math.min(bestScore, score);
-            beta = Math.min(beta, bestScore);
-        }
-        if (beta <= alpha) break; // Pruning: Skip branches that won't change the outcome
-    }
-    return bestScore;
-}
-    // --- PART 4: EXECUTION & INTERACTION ---
-
-function makeBestMove() {
-    let moves = game.moves().sort((a, b) => b.includes('x') - a.includes('x'));
-    let bestMove = null;
-    let bestValue = -Infinity;
-
-    // AI looks 3 moves ahead + Quiescence search
-    for (let move of moves) {
-        game.move(move);
-        let boardValue = minimax(2, game, -Infinity, Infinity, false);
-        game.undo();
-        if (boardValue > bestValue) {
-            bestValue = boardValue;
-            bestMove = move;
-        }
-    }
-
-    let moveObj = game.move(bestMove);
-    board.position(game.fen());
-    updateGraveyard();
-    
-    // TRAP CHECK: Trigger insults based on what just happened
-    let botResponse = getBotInsult(moveObj);
-    $('#status').text(botResponse);
-    
-    resetStallTimer();
-}
-
-// Logic for specialized insult triggers
-function getBotInsult(move) {
-    if (move.captured === 'q') return insults.queenLoss;
-    if (!playerLostFirstPiece && move.captured) {
-        playerLostFirstPiece = true;
-        return insults.firstLoss;
-    }
-    return insults.general[Math.floor(Math.random() * insults.general.length)];
-}
-
-function onDrop(src, tgt) {
-    let move = game.move({ from: src, to: tgt, promotion: 'q' });
-    if (!move) return 'snapback';
-    
-    clearTimeout(moveTimer); // Stop the stall timer while bot calculates
-    updateGraveyard();
-    
-    // The bot stays silent while calculating (No "Processing" text)
-    window.setTimeout(makeBestMove, 250);
-}
-
-function undoMove() {
-    game.undo(); game.undo();
-    board.position(game.fen());
-    updateGraveyard();
-    let msg = insults.undo[Math.floor(Math.random() * insults.undo.length)];
-    $('#status').text(msg);
-    resetStallTimer();
-}
-
-// INITIALIZE THE BOARD
-board = Chessboard('board', {
-    draggable: true,
-    position: 'start',
-    onDrop: onDrop,
-    pieceTheme: pieceBaseUrl + '{piece}.png'
-});
-
-// START THE SYSTEM
-resetStallTimer();
+        board = Chessboard('board', {
+            draggable: true, position: 'start', onDrop: onDrop,
+            pieceTheme: pieceBaseUrl + '{piece}.png'
+        });
+        resetStallTimer();
+    </script>
+</body>
+</html>
