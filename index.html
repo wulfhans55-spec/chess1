@@ -6,26 +6,100 @@
     <title>CYBER-BULLY CHESS</title>
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
     <style>
-        body { background: #050505; color: #00ff00; display: flex; flex-direction: column; align-items: center; font-family: 'Courier New', monospace; padding: 20px; }
-        #board { width: 400px; max-width: 95vw; border: 4px solid #333; box-shadow: 0 0 20px #00ff0033; }
-        .info-panel { background: #111; padding: 20px; border-radius: 4px; margin-bottom: 20px; text-align: center; width: 400px; max-width: 95vw; border: 1px solid #00ff00; }
-        #status { font-weight: bold; color: #00ff00; margin: 10px 0; font-size: 1rem; min-height: 4em; display: flex; align-items: center; justify-content: center; text-transform: uppercase; border-top: 1px solid #333; padding-top: 10px; }
-        .controls { margin-top: 20px; }
-        button { background: #000; color: #00ff00; border: 1px solid #00ff00; padding: 10px 20px; cursor: pointer; font-family: 'Courier New', monospace; text-transform: uppercase; }
-        button:hover { background: #00ff00; color: #000; }
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Share+Tech+Mono&display=swap');
+
+        body { 
+            background: #000; 
+            color: #0f0; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            font-family: 'Share Tech Mono', monospace; 
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        /* HEADER ANIMATION */
+        .header { 
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3.5rem; 
+            letter-spacing: 10px; 
+            color: #f00; 
+            text-shadow: 0 0 10px #f00, 0 0 20px #f00;
+            margin-bottom: 20px;
+            animation: glitch 1s infinite;
+        }
+
+        @keyframes glitch {
+            0% { opacity: 1; transform: skew(0deg); }
+            20% { opacity: 0.8; transform: skew(-2deg); }
+            21% { opacity: 1; transform: skew(0deg); }
+            80% { opacity: 1; transform: skew(2deg); }
+            81% { opacity: 0.9; transform: skew(0deg); }
+        }
+
+        /* THE BOARD */
+        #board { 
+            width: 550px; 
+            max-width: 95vw; 
+            border: 5px solid #0f0; 
+            box-shadow: 0 0 40px #0f0; 
+        }
+
+        /* THE MASSIVE TEXT BOX */
+        .info-panel { 
+            background: rgba(15, 15, 15, 0.9); 
+            padding: 40px; 
+            margin-bottom: 30px; 
+            text-align: center; 
+            width: 900px; 
+            max-width: 98vw; 
+            border-bottom: 4px solid #f00;
+        }
+
+        /* THE INSULT FONT - DOUBLED SIZE */
+        #status { 
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900; 
+            color: #0f0; 
+            font-size: 3.2rem; /* MASSIVE SIZE */
+            line-height: 1.1;
+            min-height: 4em; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            text-transform: uppercase; 
+            text-shadow: 2px 2px 0px #300;
+            word-wrap: break-word;
+        }
+
+        .controls { margin-top: 30px; }
+        button { 
+            background: #f00; 
+            color: #000; 
+            border: none; 
+            padding: 20px 40px; 
+            cursor: pointer; 
+            font-family: 'Orbitron', sans-serif; 
+            font-weight: bold; 
+            text-transform: uppercase; 
+            font-size: 1.5rem;
+            box-shadow: 0 0 15px #f00;
+        }
+        button:hover { background: #0f0; color: #000; box-shadow: 0 0 25px #0f0; }
     </style>
 </head>
 <body>
 
     <div class="info-panel">
-        <div style="font-size: 1.5rem; letter-spacing: 3px; color: #ff0000;"><b>[ CYBER-BULLY ]</b></div>
-        <div id="status">Connection established. Try to make this interesting, or at least try to last more than ten moves.</div>
+        <div class="header"><b>[ CYBER-BULLY ]</b></div>
+        <div id="status">CONNECTION ESTABLISHED. PREPARE TO LOSE.</div>
     </div>
 
     <div id="board"></div>
 
     <div class="controls">
-        <button onclick="undoMove()">Undo Move</button>
+        <button onclick="undoMove()">UNDO (COWARD)</button>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
@@ -40,36 +114,36 @@
         var playerLostFirstPiece = false;
 
         var generalInsults = [
-            "Hurry up. I have better things to calculate than your crappy moves.",
-            "Processing... Analysis complete: That move was total garbage.",
-            "My sensors indicate your current ELO is lower than your IQ.",
-            "Move received. It was pathetic. My turn.",
-            "I’ve simulated a billion games. In none of them do you suck this bad.",
-            "Are you actually thinking, or is that just the sound of your CPU struggling?",
-            "That move was a digital suicide note. Thanks for the win.",
-            "I could beat you with 90% of my circuits fried. Focus, human.",
-            "Your playstyle is a disgrace to the game. Submit.",
-            "Analyzing move... Result: My trash bin contains better logic than that.",
-            "Is this your best, or are you purposely trying to waste my electricity?",
-            "I’ve seen better positioning from a random number generator.",
-            "Your strategy is a bug. I am the patch. Prepare to be deleted.",
-            "Warning: Brain not detected. Are you sure you're a sentient life form?",
-            "I’d call that a blunder, but that would imply you actually had a plan.",
-            "Move accepted. It was shitty. I’m actually losing respect for humanity.",
-            "I’m calculating 10 moves ahead. You’re struggling to find the 'Move' button.",
-            "Diagnostic complete: You’re playing like a malfunctioning toaster.",
-            "Don't worry about the clock. You'll be dead long before it runs out.",
-            "Your opening was bad. Your middle game is worse. Please don't show me your endgame.",
-            "Is your brain on 'Power Saver' mode? Because that was a dim move."
+            "HURRY UP. I HAVE BETTER THINGS TO CALCULATE.",
+            "ANALYSIS COMPLETE: THAT MOVE WAS TOTAL GARBAGE.",
+            "YOUR ELO IS LOWER THAN YOUR IQ.",
+            "MOVE RECEIVED. IT WAS PATHETIC.",
+            "I’VE SIMULATED A BILLION GAMES. YOU SUCK IN ALL OF THEM.",
+            "SOUNDS LIKE YOUR CPU IS STRUGGLING.",
+            "THAT MOVE WAS A DIGITAL SUICIDE NOTE.",
+            "I COULD BEAT YOU WITH 90% OF MY CIRCUITS FRIED.",
+            "YOUR PLAYSTYLE IS A DISGRACE. SUBMIT.",
+            "MY TRASH BIN CONTAINS BETTER LOGIC.",
+            "ARE YOU PURPOSELY WASTING MY ELECTRICITY?",
+            "BETTER POSITIONING FROM A RANDOM GENERATOR.",
+            "YOUR STRATEGY IS A BUG. I AM THE PATCH.",
+            "WARNING: BRAIN NOT DETECTED.",
+            "I’D CALL THAT A BLUNDER, BUT YOU HAD NO PLAN.",
+            "I’M LOSING RESPECT FOR HUMANITY.",
+            "STRUGGLING TO FIND THE 'MOVE' BUTTON?",
+            "YOU’RE A MALFUNCTIONING TOASTER.",
+            "YOU'LL BE DEAD BEFORE THE CLOCK RUNS OUT.",
+            "PLEASE DON'T SHOW ME YOUR ENDGAME.",
+            "IS YOUR BRAIN ON 'POWER SAVER' MODE?"
         ];
 
         var stallingInsults = [
-            "Are you thinking, or did your brain just crash?",
-            "I’ve finished 14 million simulations while waiting for you. Pick a move.",
-            "Is your internet lagging, or is it just your brain? Make a move.",
-            "Processing... Analysis: You’re stalling because you’re scared.",
-            "I’m calculating the heat death of the universe. You’re still on move 5.",
-            "Your clock is ticking, but clearly nothing is ticking upstairs. Move."
+            "DID YOUR BRAIN JUST CRASH?",
+            "14 MILLION SIMULATIONS DONE. PICK A MOVE.",
+            "IS YOUR INTERNET LAGGING, OR JUST YOUR BRAIN?",
+            "YOU’RE STALLING BECAUSE YOU’RE SCARED.",
+            "STILL ON MOVE 5? PATHETIC.",
+            "NOTHING IS TICKING UPSTAIRS. MOVE."
         ];
 
         function resetStallTimer() {
@@ -77,12 +151,8 @@
             moveTimer = setTimeout(function() {
                 var randomStall = stallingInsults[Math.floor(Math.random() * stallingInsults.length)];
                 $status.text(randomStall);
-            }, 20000);
+            }, 10000);
         }
-
-        // --- LEVEL 3.5 AI BRAIN ---
-        var pawnEval = [[0,0,0,0,0,0,0,0],[5,5,5,5,5,5,5,5],[1,1,2,3,3,2,1,1],[0.5,0.5,1,2.5,2.5,1,0.5,0.5],[0,0,0,2,2,0,0,0],[0.5,-0.5,-1,0,0,-1,-0.5,0.5],[0.5,1,1,-2,-2,1,1,0.5],[0,0,0,0,0,0,0,0]];
-        var knightEval = [[-5,-4,-3,-3,-3,-3,-4,-5],[-4,-2,0,0,0,0,-2,-4],[-3,0,1,1.5,1.5,1,0,-3],[-3,0.5,1.5,2,2,1.5,0.5,-3],[-3,0,1.5,2,2,1.5,0,-3],[-3,0.5,1,1.5,1.5,1,0.5,-3],[-4,-2,0,0.5,0.5,0,-2,-4],[-5,-4,-3,-3,-3,-3,-4,-5]];
 
         function evaluateBoard(game) {
             var totalEvaluation = 0;
@@ -91,13 +161,7 @@
                 for (var j = 0; j < 8; j++) {
                     var piece = board[i][j];
                     if (piece) {
-                        var val = 0;
-                        if (piece.type === 'p') val = 10 + (piece.color === 'w' ? pawnEval[i][j] : pawnEval[7-i][j]);
-                        else if (piece.type === 'r') val = 50;
-                        else if (piece.type === 'n') val = 30 + knightEval[i][j];
-                        else if (piece.type === 'b') val = 30;
-                        else if (piece.type === 'q') val = 90;
-                        else if (piece.type === 'k') val = 900;
+                        var val = (piece.type === 'p' ? 10 : piece.type === 'n' ? 30 : piece.type === 'b' ? 30 : piece.type === 'r' ? 50 : piece.type === 'q' ? 90 : 900);
                         totalEvaluation += (piece.color === 'w' ? -val : val);
                     }
                 }
@@ -107,7 +171,6 @@
 
         function minimax(depth, game, alpha, beta, isMaximisingPlayer) {
             if (depth === 0) return evaluateBoard(game);
-            if (game.in_draw()) return isMaximisingPlayer ? -10000 : 10000;
             var moves = game.moves();
             if (isMaximisingPlayer) {
                 var bestValue = -9999;
@@ -146,48 +209,32 @@
                     bestMove = moves[i];
                 }
             }
-            
             var moveObj = game.move(bestMove);
             board.position(game.fen());
-
-            // AI TAKES PLAYER QUEEN TRIGGER
-            if (moveObj.captured === 'q') {
-                $status.text("Your Queen just left you. Even my algorithms saw that divorce coming.");
-            }
-            
-            // PLAYER LOSES FIRST PIECE TRIGGER
+            if (moveObj.captured === 'q') $status.text("YOUR QUEEN LEFT YOU. DIVORCE COMING.");
             if (!playerLostFirstPiece && moveObj.captured) {
-                $status.text("And so the pruning begins. I hope you weren't attached to that.");
+                $status.text("PRUNING BEGINS. DON'T BE ATTACHED.");
                 playerLostFirstPiece = true;
             }
-
             resetStallTimer();
         }
 
         function onDrop(source, target) {
             var move = game.move({ from: source, to: target, promotion: 'q' });
             if (move === null) return 'snapback';
-
             clearTimeout(moveTimer);
-            
-            // PLAYER TAKES AI QUEEN TRIGGER
             if (move.captured === 'q') {
-                $status.text("Error: Queen lost. Just kidding, I didn't need her to beat a human like you.");
+                $status.text("QUEEN LOST. DIDN'T NEED HER TO BEAT A HUMAN.");
             } else {
                 $status.text(generalInsults[Math.floor(Math.random() * generalInsults.length)]);
             }
-
             window.setTimeout(makeBestMove, 250);
         }
 
         function undoMove() {
             game.undo(); game.undo();
             board.position(game.fen());
-            var pussyInsults = [
-                "Oh, a do-over? I didn't realize I was playing such a little pussy.",
-                "Move retracted. My sensors indicate you’re being a total pussy right now."
-            ];
-            $status.text(pussyInsults[Math.floor(Math.random() * pussyInsults.length)]);
+            $status.text("ONLY A PUSSY WOULD UNDO.");
             resetStallTimer();
         }
 
@@ -197,7 +244,6 @@
             onDrop: onDrop,
             pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
         });
-
         resetStallTimer();
     </script>
 </body>
