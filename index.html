@@ -5,94 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CYBER-BULLY CHESS</title>
     <link rel="stylesheet" href="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.css">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Share+Tech+Mono&display=swap');
-        
-        body { 
-            background: #000; color: #0f0; display: flex; flex-direction: column; align-items: center; 
-            font-family: 'Share Tech Mono', monospace; margin: 0; height: 100vh; overflow: hidden; justify-content: center; 
-        }
-
-        /* MASSIVE HEADER */
-        .header { 
-            font-family: 'Orbitron', sans-serif; font-size: 2.2rem; letter-spacing: 8px; color: #f00; 
-            text-shadow: 0 0 10px #f00; margin-bottom: 5px; animation: glitch 1s infinite;
-        }
-
-        @keyframes glitch {
-            0% { opacity: 1; transform: skew(0deg); }
-            20% { opacity: 0.8; transform: skew(-1deg); }
-            80% { opacity: 1; transform: skew(1deg); }
-        }
-
-        /* WIDE INFO PANEL */
-        .info-panel { 
-            background: rgba(10, 10, 10, 0.9); padding: 15px; margin-bottom: 15px; 
-            text-align: center; width: 95vw; max-width: 1100px; border: 2px solid #0f0; 
-            box-shadow: 0 0 15px #0f0;
-        }
-        
-        /* 1.5x - 1.8x ORIGINAL FONT SIZE */
-        #status { 
-            font-family: 'Orbitron', sans-serif; font-weight: 900; color: #0f0; font-size: 1.8rem; 
-            min-height: 2.5em; display: flex; align-items: center; justify-content: center; text-transform: uppercase; 
-            text-shadow: 2px 2px 0px #000;
-        }
-
-        .game-container { display: flex; align-items: center; gap: 20px; }
-        
-        /* GLOWING BOARD */
-        #board { width: 400px; border: 4px solid #0f0; box-shadow: 0 0 20px #0f0; }
-
-        /* NEON SQUARES */
-        .white-1e1d7 { background-color: #0a200a !important; box-shadow: inset 0 0 15px #0f0; } 
-        .black-3c85d { background-color: #200a0a !important; box-shadow: inset 0 0 15px #f00; } 
-        
-        /* GRAVEYARDS */
-        .graveyard { 
-            width: 80px; height: 400px; background: #050505; border: 1px solid #0f0; 
-            padding: 5px; display: flex; flex-wrap: wrap; align-content: flex-start; gap: 2px;
-            box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
-        }
-        .graveyard img { width: 32px; height: 32px; filter: drop-shadow(0 0 2px #0f0); }
-        .graveyard-label { width: 100%; font-size: 0.7rem; color: #f00; text-align: center; margin-bottom: 5px; font-weight: bold; }
-
-        .controls { margin-top: 15px; }
-        button { 
-            background: #f00; color: #000; border: none; padding: 12px 30px; cursor: pointer; 
-            font-family: 'Orbitron', sans-serif; font-weight: bold; text-transform: uppercase;
-            box-shadow: 0 0 10px #f00;
-        }
-        button:hover { background: #0f0; box-shadow: 0 0 15px #0f0; }
-    </style>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
 </head>
 <body>
 
-    <div class="info-panel">
-        <div class="header"><b>[ CYBER-BULLY ]</b></div>
-        <div id="status">CONNECTION ESTABLISHED. LEVEL 4 READY.</div>
-    </div>
-
-    <div class="game-container">
-        <div class="graveyard" id="player-kills">
-            <div class="graveyard-label">AI LOSSES</div>
+    <div id="game-wrapper">
+        <div class="info-panel">
+            <div class="header"><b>[ CYBER-BULLY ]</b></div>
+            <div id="status">Connection established. Try to make this interesting, or at least try to last more than ten moves.</div>
         </div>
-        
-        <div id="board"></div>
 
-        <div class="graveyard" id="ai-kills">
-            <div class="graveyard-label">YOUR LOSSES</div>
+        <div class="game-container">
+            <div class="graveyard" id="player-kills"><div class="label">AI LOSSES</div></div>
+            <div id="board"></div>
+            <div class="graveyard" id="ai-kills"><div class="label">YOUR LOSSES</div></div>
+        </div>
+
+        <div class="controls">
+            <button onclick="undoMove()">UNDO (COWARD)</button>
         </div>
     </div>
-
-    <div class="controls">
-        <button onclick="undoMove()">UNDO (COWARD)</button>
-    </div>
-
-    ```
-<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
-    <script src="https://unpkg.com/@chrisoakman/chessboardjs@1.0.0/dist/chessboard-1.0.0.min.js"></script>
 
     <script>
         var board = null;
@@ -102,71 +36,56 @@
         var playerLostFirstPiece = false;
         var pieceBaseUrl = 'https://chessboardjs.com/img/chesspieces/wikipedia/';
 
-        const generalInsults = [
-            "HURRY UP. I HAVE BETTER THINGS TO CALCULATE.",
-            "ANALYSIS COMPLETE: THAT MOVE WAS TOTAL GARBAGE.",
-            "YOUR ELO IS LOWER THAN YOUR IQ.",
-            "MOVE RECEIVED. IT WAS PATHETIC.",
-            "I’VE SIMULATED A BILLION GAMES. YOU SUCK IN ALL OF THEM.",
-            "SOUNDS LIKE YOUR CPU IS STRUGGLING.",
-            "THAT MOVE WAS A DIGITAL SUICIDE NOTE.",
-            "I COULD BEAT YOU WITH 90% OF MY CIRCUITS FRIED.",
-            "YOUR PLAYSTYLE IS A DISGRACE. SUBMIT.",
-            "MY TRASH BIN CONTAINS BETTER LOGIC.",
-            "ARE YOU PURPOSELY WASTING MY ELECTRICITY?",
-            "BETTER POSITIONING FROM A RANDOM GENERATOR.",
-            "YOUR STRATEGY IS A BUG. I AM THE PATCH.",
-            "WARNING: BRAIN NOT DETECTED.",
-            "I’M LOSING RESPECT FOR HUMANITY.",
-            "STRUGGLING TO FIND THE 'MOVE' BUTTON?",
-            "YOU’RE A MALFUNCTIONING TOASTER.",
-            "YOU'LL BE DEAD BEFORE THE CLOCK RUNS OUT.",
-            "PLEASE DON'T SHOW ME YOUR ENDGAME.",
-            "IS YOUR BRAIN ON 'POWER SAVER' MODE?"
-        ];
+        // THE INSULT DATABASE (Part 1)
+        const insults = {
+            firstLoss: "I hope you weren't attached to that.",
+            queenLoss: "Your Queen just left you. Even my algorithms saw that divorce coming.",
+            undo: [
+                "Oh, a do-over? I didn't realize I was playing such a little pussy.",
+                "Move retracted. What a looser."
+            ],
+            stalling: [
+                "Are you thinking, or did your brain just crash?",
+                "I’ve finished 14 million simulations while waiting for you. Pick a move.",
+                "Is your internet lagging, or is it just your brain? Make a move.",
+                "Processing... Analysis: You’re stalling because you’re scared.",
+                "Your clock is ticking, but clearly nothing is ticking upstairs. Move."
+            ],
+            general: [
+                "Hurry up. I have better things to calculate than your crappy moves.",
+                "Processing... Analysis complete: That move was total garbage.",
+                "My sensors indicate your current ELO is lower than your IQ.",
+                "Move received. It was pathetic.",
+                "I’ve simulated a billion games. In none of them do you suck this bad.",
+                "That move was a digital suicide note.",
+                "I could beat you with 90% of my circuits fried.",
+                "Your playstyle is a disgrace to the game.",
+                "Analyzing move... Result: My trash bin contains better logic than that.",
+                "Is this your best, or are you purposely trying to waste my electricity?",
+                "I’ve seen better positioning from a random number generator.",
+                "Your strategy is a bug. I am the patch. Prepare to be deleted.",
+                "Warning: Brain not detected. Are you sure you're a sentient life form?",
+                "I’d call that a blunder, but that would imply you actually had a plan.",
+                "Move accepted. It was shitty. I’m actually losing respect for humanity.",
+                "I’m calculating 10 moves ahead. You’re struggling to find the 'Move' button.",
+                "Diagnostic complete: You’re playing like a malfunctioning toaster.",
+                "Don't worry about the clock. You'll be dead long before it runs out.",
+                "Is your brain on 'Power Saver' mode? Because that was a dim move."
+            ]
+        };
 
-        const stallingInsults = [
-            "DID YOUR BRAIN JUST CRASH?",
-            "14 MILLION SIMULATIONS DONE. PICK A MOVE.",
-            "IS YOUR INTERNET LAGGING, OR JUST YOUR BRAIN?",
-            "YOU’RE STALLING BECAUSE YOU’RE SCARED.",
-            "STILL ON MOVE 5? PATHETIC.",
-            "NOTHING IS TICKING UPSTAIRS. MOVE."
-        ];
-
+        // CORE TIMER LOGIC
         function resetStallTimer() {
             clearTimeout(moveTimer);
-            moveTimer = setTimeout(() => {
-                $status.text(stallingInsults[Math.floor(Math.random() * stallingInsults.length)]);
-            }, 10000);
-        }
-
-        // --- LEVEL 4 AI ENGINE ---
-        const weights = { p: 10, n: 32, b: 33, r: 50, q: 90, k: 900 };
-        function evaluateBoard(game) {
-            var total = 0;
-            game.board().forEach(row => {
-                row.forEach(p => { if (p) total += (p.color === 'w' ? -weights[p.type] : weights[p.type]); });
-            });
-            return total;
-        }
-
-        function minimax(depth, game, alpha, beta, isMax) {
-            if (depth === 0) return evaluateBoard(game);
-            var moves = game.moves();
-            if (moves.length === 0) return isMax ? -9999 : 9999;
-            var best = isMax ? -10000 : 10000;
-            for (var move of moves) {
-                game.move(move);
-                var val = minimax(depth - 1, game, alpha, beta, !isMax);
-                game.undo();
-                if (isMax) { best = Math.max(best, val); alpha = Math.max(alpha, best); }
-                else { best = Math.min(best, val); beta = Math.min(beta, best); }
-                if (beta <= alpha) break;
+            if (game.history().length > 0) {
+                moveTimer = setTimeout(function() {
+                    var msg = insults.stalling[Math.floor(Math.random() * insults.stalling.length)];
+                    $status.text(msg);
+                }, 10000);
             }
-            return best;
         }
 
+        // CORE PIECE TRACKING
         function updateGraveyard() {
             $('#player-kills, #ai-kills').find('img').remove();
             game.history({verbose: true}).forEach(m => {
@@ -178,58 +97,5 @@
             });
         }
 
-        function makeBestMove() {
-            var moves = game.moves();
-            var bestMove = null;
-            var bestValue = -Infinity;
-            for (var move of moves) {
-                game.move(move);
-                var val = minimax(3, game, -10000, 10000, false);
-                game.undo();
-                if (val > bestValue) { bestValue = val; bestMove = move; }
-            }
-            let mObj = game.move(bestMove);
-            board.position(game.fen());
-            updateGraveyard();
-            
-            if (mObj.captured === 'q') {
-                $status.text("YOUR QUEEN JUST LEFT YOU. EVEN MY ALGORITHMS SAW THAT DIVORCE COMING.");
-            } else if (!playerLostFirstPiece && mObj.captured) {
-                $status.text("PRUNING BEGINS. DON'T BE ATTACHED.");
-                playerLostFirstPiece = true;
-            } else {
-                $status.text(generalInsults[Math.floor(Math.random() * generalInsults.length)]);
-            }
-            resetStallTimer();
-        }
-
-        function onDrop(src, tgt) {
-            var move = game.move({ from: src, to: tgt, promotion: 'q' });
-            if (!move) return 'snapback';
-            clearTimeout(moveTimer);
-            updateGraveyard();
-            // No "Processing" message—bot stays silent until it moves
-            window.setTimeout(makeBestMove, 250);
-        }
-
-        function undoMove() {
-            game.undo(); game.undo();
-            board.position(game.fen());
-            updateGraveyard();
-            const undoLines = [
-                "ONLY A PUSSY WOULD UNDO.",
-                "OH, A DO-OVER? I DIDN'T REALIZE I WAS PLAYING SUCH A LITTLE PUSSY.",
-                "MOVE RETRACTED. MY SENSORS INDICATE YOU’RE BEING A TOTAL PUSSY RIGHT NOW."
-            ];
-            $status.text(undoLines[Math.floor(Math.random() * undoLines.length)]);
-            resetStallTimer();
-        }
-
-        board = Chessboard('board', {
-            draggable: true, position: 'start', onDrop: onDrop,
-            pieceTheme: pieceBaseUrl + '{piece}.png'
-        });
-        resetStallTimer();
+        // To be continued in Parts 2, 3, and 4...
     </script>
-</body>
-</html>
