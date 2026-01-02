@@ -37,7 +37,7 @@
         var game = new Chess();
         var $status = $('#status');
         var moveTimer = null;
-        var firstPieceTaken = false;
+        var playerLostFirstPiece = false;
 
         var generalInsults = [
             "Hurry up. I have better things to calculate than your crappy moves.",
@@ -77,10 +77,13 @@
             moveTimer = setTimeout(function() {
                 var randomStall = stallingInsults[Math.floor(Math.random() * stallingInsults.length)];
                 $status.text(randomStall);
-            }, 20000); // 20 Seconds
+            }, 20000);
         }
 
-        // --- AI LOGIC ---
+        // --- LEVEL 3.5 AI BRAIN ---
+        var pawnEval = [[0,0,0,0,0,0,0,0],[5,5,5,5,5,5,5,5],[1,1,2,3,3,2,1,1],[0.5,0.5,1,2.5,2.5,1,0.5,0.5],[0,0,0,2,2,0,0,0],[0.5,-0.5,-1,0,0,-1,-0.5,0.5],[0.5,1,1,-2,-2,1,1,0.5],[0,0,0,0,0,0,0,0]];
+        var knightEval = [[-5,-4,-3,-3,-3,-3,-4,-5],[-4,-2,0,0,0,0,-2,-4],[-3,0,1,1.5,1.5,1,0,-3],[-3,0.5,1.5,2,2,1.5,0.5,-3],[-3,0,1.5,2,2,1.5,0,-3],[-3,0.5,1,1.5,1.5,1,0.5,-3],[-4,-2,0,0.5,0.5,0,-2,-4],[-5,-4,-3,-3,-3,-3,-4,-5]];
+
         function evaluateBoard(game) {
             var totalEvaluation = 0;
             var board = game.board();
@@ -89,9 +92,9 @@
                     var piece = board[i][j];
                     if (piece) {
                         var val = 0;
-                        if (piece.type === 'p') val = 10;
+                        if (piece.type === 'p') val = 10 + (piece.color === 'w' ? pawnEval[i][j] : pawnEval[7-i][j]);
                         else if (piece.type === 'r') val = 50;
-                        else if (piece.type === 'n') val = 30;
+                        else if (piece.type === 'n') val = 30 + knightEval[i][j];
                         else if (piece.type === 'b') val = 30;
                         else if (piece.type === 'q') val = 90;
                         else if (piece.type === 'k') val = 900;
@@ -102,12 +105,62 @@
             return totalEvaluation;
         }
 
+        function minimax(depth, game, alpha, beta, isMaximisingPlayer) {
+            if (depth === 0) return evaluateBoard(game);
+            if (game.in_draw()) return isMaximisingPlayer ? -10000 : 10000;
+            var moves = game.moves();
+            if (isMaximisingPlayer) {
+                var bestValue = -9999;
+                for (var i = 0; i < moves.length; i++) {
+                    game.move(moves[i]);
+                    bestValue = Math.max(bestValue, minimax(depth - 1, game, alpha, beta, !isMaximisingPlayer));
+                    game.undo();
+                    alpha = Math.max(alpha, bestValue);
+                    if (beta <= alpha) return bestValue;
+                }
+                return bestValue;
+            } else {
+                var bestValue = 9999;
+                for (var i = 0; i < moves.length; i++) {
+                    game.move(moves[i]);
+                    bestValue = Math.min(bestValue, minimax(depth - 1, game, alpha, beta, !isMaximisingPlayer));
+                    game.undo();
+                    beta = Math.min(beta, bestValue);
+                    if (beta <= alpha) return bestValue;
+                }
+                return bestValue;
+            }
+        }
+
         function makeBestMove() {
             var moves = game.moves();
             if (moves.length === 0) return;
-            var bestMove = moves[Math.floor(Math.random() * moves.length)];
-            game.move(bestMove);
+            var bestMove = null;
+            var bestValue = -9999;
+            for (var i = 0; i < moves.length; i++) {
+                game.move(moves[i]);
+                var boardValue = minimax(2, game, -10000, 10000, false);
+                game.undo();
+                if (boardValue > bestValue) {
+                    bestValue = boardValue;
+                    bestMove = moves[i];
+                }
+            }
+            
+            var moveObj = game.move(bestMove);
             board.position(game.fen());
+
+            // AI TAKES PLAYER QUEEN TRIGGER
+            if (moveObj.captured === 'q') {
+                $status.text("Your Queen just left you. Even my algorithms saw that divorce coming.");
+            }
+            
+            // PLAYER LOSES FIRST PIECE TRIGGER
+            if (!playerLostFirstPiece && moveObj.captured) {
+                $status.text("And so the pruning begins. I hope you weren't attached to that.");
+                playerLostFirstPiece = true;
+            }
+
             resetStallTimer();
         }
 
@@ -116,31 +169,15 @@
             if (move === null) return 'snapback';
 
             clearTimeout(moveTimer);
-            var statusMsg = "";
-
-            // Check for specific triggers
-            if (!firstPieceTaken && move.captured) {
-                statusMsg = "And so the pruning begins. I hope you weren't attached to that.";
-                firstPieceTaken = true;
-            } else if (move.captured === 'q') {
-                statusMsg = "Error: Queen lost. Just kidding, I didn't need her to beat a human like you.";
-            } else if (game.history({verbose: true}).slice(-1)[0].captured === 'q') {
-                 // Handled in makeBestMove for AI taking user queen
+            
+            // PLAYER TAKES AI QUEEN TRIGGER
+            if (move.captured === 'q') {
+                $status.text("Error: Queen lost. Just kidding, I didn't need her to beat a human like you.");
             } else {
-                statusMsg = generalInsults[Math.floor(Math.random() * generalInsults.length)];
+                $status.text(generalInsults[Math.floor(Math.random() * generalInsults.length)]);
             }
 
-            $status.text(statusMsg);
-            
-            window.setTimeout(function() {
-                // Check if AI takes user queen
-                var moveCountBefore = game.history().length;
-                makeBestMove();
-                var lastMove = game.history({verbose: true}).pop();
-                if (lastMove && lastMove.captured === 'q') {
-                    $status.text("Your Queen just left you. Even my algorithms saw that divorce coming.");
-                }
-            }, 500);
+            window.setTimeout(makeBestMove, 250);
         }
 
         function undoMove() {
